@@ -26,9 +26,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # os.chdir('/home/kneehit/Data Science/Bone Age Kaggle/PyTorch')
 
-val_loss_w = open('vla_loss.csv', mode='at', encoding='utf-8')
-train_loss_w = open('train_loss.csv', mode='at', encoding='utf-8')
-
 #%%
 # Image and CSV paths
 train_dataset_path = 'bone_data/train/'
@@ -302,7 +299,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             
         total_loss = running_loss / dataset_size
         print('\n \n Epoch {} Loss: {:.4f} \n \n'.format(epoch+1,total_loss))
-        train_loss_w.writelines['Epoch {} Loss: {:.4f}'.format(epoch+1,total_loss)]
         
         
     # Eval on validation set
@@ -324,7 +320,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     val_loss = val_running_loss / 1611
     
     print('Validation Loss {:.4f}'.format(val_loss))
-    val_loss_w.writelines('Validation Loss {:.4f}'.format(val_loss))
         
         
         
@@ -361,8 +356,6 @@ test_df = test_df.reset_index()
 from sklearn.metrics import mean_squared_error
 rmse = np.sqrt(mean_squared_error(test_df['boneage'], test_df['output']))
 print(rmse)
-val_loss_w.close()
-train_loss_w.close()
 # 25.259
 #%%
 
