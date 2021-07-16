@@ -22,6 +22,7 @@ import glob
 import random
 from age_predictor_model import Bottleneck, AgePredictor
 from sklearn.metrics import mean_squared_error
+from multiprocessing import freeze_support
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # cuda가 정상적으로 작동하는지, 혹시 CPU로 돌리고 있는지 확인해주는 역할
@@ -78,8 +79,7 @@ for filename in random_images:
 avg_mean = np.mean(means) # 평균의 평균
 avg_std = np.mean(stds) # 분산의 평균
 
-print('Approx. Mean of Images in Dataset: ',avg_mean)
-print('Approx. Standard Deviation of Images in Dataset: ',avg_std)
+
 
 
 
@@ -108,19 +108,17 @@ val_size = len(val_image_filenames)
 test_size = len(test_image_filenames)
 
 
-
 bones_df = pd.read_csv(csv_path)
 val_bones_df=pd.read_csv(val_csv_path)
 bones_df.iloc[:,1:3] = bones_df.iloc[:,1:3].astype(np.float)
-val_bones_df = val_bones_df.reindex(columns=['Image ID', 'Bone Age (months)', 'male'])
+val_bones_df = val_bones_df.reindex(columns=['id', 'boneage', 'male'])
 # validation set의 csv column의 순서가 train set과 다르기 때문에 통일해 줌
 val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
 # columns는 [id, boneage, male]로 이루어져있음, float으로 바꿔면서 male은 (1.0, 0.0)으로 바뀌게 됨
 
-
 train_df = bones_df
 val_df = val_bones_df.iloc[:val_size,:]
-test_df = bones_df.iloc[val_size:test_size,:]
+test_df = val_bones_df.iloc[val_size:,:]
 
 
 age_max = np.max(bones_df['boneage'])
@@ -219,52 +217,15 @@ train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,t
 val_dataset = BonesDataset(dataframe = val_df,image_dir = val_dataset_path,transform = data_transform)
 test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
 
-# Sanity Check
-print(train_dataset[0])
-
-
 train_data_loader = DataLoader(train_dataset,batch_size=4,shuffle=False,num_workers = 4)
 val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=False,num_workers = 4)
 test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
 # num_workers: 데이터 로드 멀티 프로세싱
 
-#%%
-   
-
-# Sanity Check 2
-sample_batch =  next(iter(test_data_loader))
-print(sample_batch)
-
-#%%
-# Initialize the model
-age_predictor = AgePredictor(block = Bottleneck,layers = [3, 4, 23, 3],num_classes =1)
-# Age Predictor는 age_predictor_model.py에 있는 class이다.
-
-#%%
-# Set loss as mean squared error (for continuous output)
-# Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
-
-age_predictor = age_predictor.to(device)
-criterion = nn.MSELoss()
-optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
-scheduler = lr_scheduler.StepLR(optimizer, step_size=12, gamma=0.5)
-
-
-
-
-#%% To Resume Training 
-
-
-#checkpoint = torch.load('epoch-25-loss-0.0194-val_loss-0.0085.pth.tar')
-#start_epoch = checkpoint['epoch']
-#age_predictor.load_state_dict(checkpoint['state_dict'])
-#optimizer.load_state_dict(checkpoint['optimizer'])
-#scheduler.load_state_dict(checkpoint['scheduler'])
-
-
 
 #%%
 
+# 학습 데이터 저장 메소드
 def save_checkpoint(state, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
 
@@ -326,7 +287,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             # Calculate Loss
             running_loss += loss.item() * image.size(0)
             
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/2500 '.format(epoch+1,batch_no+1))
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3152 '.format(epoch+1,batch_no+1))
 
         # Eval on validation set
         model.eval()
@@ -355,7 +316,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     # Save checkpoint every epoch
     total_epochs = scheduler.state_dict()['last_epoch'] + 1        
     states = {
-            'epoch': total_epochs + 1,
+            'epoch': total_epochs,
             'state_dict': model.state_dict(),
             'optimizer' : optimizer.state_dict(),
             'scheduler'  : scheduler.state_dict()
@@ -363,29 +324,12 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     save_checkpoint(states,filename = 'epoch-{}-loss-{:.4f}-val_loss-{:.4f}.pth.tar'.format(total_epochs,total_loss,val_loss))
 
     return model
-#%%
 
-resnet_model = train_model(age_predictor,criterion,optimizer,scheduler,num_epochs=1) # 임시로 epoch을 1로 변경
 #%%    
 
 def denormalize(inputs,age_min,age_max):
     return inputs * (age_max - age_min) + age_min
         
-
-
-
-result_array = eval_model(age_predictor,test_data_loader)
-
-test_df['output'] = result_array
-test_df['output'] = np.round(test_df['output'], decimals=2)
-test_df = test_df.reset_index()
-
-
-
-#%%
-rmse = np.sqrt(mean_squared_error(test_df['boneage'], test_df['output']))
-print(rmse)
-# 25.259
 #%%
 
 def display_preds(num):
@@ -399,4 +343,48 @@ def display_preds(num):
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         
-display_preds(4)
+#%%
+   
+
+# Sanity Check 2
+if __name__ == '__main__':
+    freeze_support()
+    print('Approx. Mean of Images in Dataset: ',avg_mean)
+    print('Approx. Standard Deviation of Images in Dataset: ',avg_std)
+    
+    # Sanity Check
+    print(train_dataset[0])
+    
+    sample_batch = next(iter(test_data_loader))
+    print(sample_batch)
+
+#%%
+# Initialize the model
+    age_predictor = AgePredictor(block = Bottleneck,layers = [3, 4, 23, 3],num_classes =1)
+# Age Predictor는 age_predictor_model.py에 있는 class이다.
+
+#%%
+# Set loss as mean squared error (for continuous output)
+# Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
+
+    age_predictor = age_predictor.to(device)
+    criterion = nn.MSELoss()
+    optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=12, gamma=0.5)
+
+
+
+
+#%% To Resume Training 
+
+
+#checkpoint = torch.load('epoch-25-loss-0.0194-val_loss-0.0085.pth.tar')
+#start_epoch = checkpoint['epoch']
+#age_predictor.load_state_dict(checkpoint['state_dict'])
+#optimizer.load_state_dict(checkpoint['optimizer'])
+#scheduler.load_state_dict(checkpoint['scheduler'])
+#%%
+
+    resnet_model = train_model(age_predictor,criterion,optimizer,scheduler,num_epochs=1) # 임시로 epoch을 1로 변경
+
+    display_preds(4)

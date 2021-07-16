@@ -1,4 +1,4 @@
-Image ID,male,Bone Age (months)
+id,male,boneage
 1386,FALSE,30
 1392,TRUE,162
 1397,FALSE,18
