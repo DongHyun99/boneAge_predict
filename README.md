@@ -13,6 +13,14 @@
     # Train - 10000 images
     # Val   -  1611 images
     # Test  -  1000 images  
+    
+    <수정>
+    실제로 나눠져 있는 train, valication, test를 넣어보고 싶어서 시도해 보았다. 
+    다만 test set은 대회라서 그런지 boneage에 대한 라벨링이 되어있지 않아서  
+    validation set을 2개로 나눠서 측정했다.   
+    # Train - 12611 images
+    # Val   -  800 images
+    # Test  -  625 images 
 
 ## Modification Point  
 
@@ -25,3 +33,5 @@
 cv2로 뽑아낸 이미지는 다음과 같은 형태였다.  
 
 <img src="./result_images/145.png">
+
+* 전체적으로 코드를 이해할 수 있도록 ```main.py```에 주석을 추가했다.  

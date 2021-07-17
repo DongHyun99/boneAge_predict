@@ -1,3 +1,4 @@
 bone_data/test/
 bone_data/train/
 bone_data/validation/
+__pycache__/
