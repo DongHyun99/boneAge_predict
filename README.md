@@ -32,6 +32,6 @@
 
 cv2로 뽑아낸 이미지는 다음과 같은 형태였다.  
 
-<img src="./result_images/145.png">
+<img src="./result/result_image/145.png">
 
 * 전체적으로 코드를 이해할 수 있도록 ```main.py```에 주석을 추가했다.  
