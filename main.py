@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Aug 18 09:53:52 2019
-
-@author: kneehit
-"""
- 
 
 import torch
 import torch.nn as nn
@@ -13,8 +7,6 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 import numpy as np
 from torchvision import transforms
-import os
-#os.chdir('/home/kneehit/Data Science/Bone Age Kaggle/PyTorch')
 from torch.utils.data import Dataset, DataLoader
 import cv2
 import pandas as pd
@@ -124,12 +116,12 @@ test_df = val_bones_df.iloc[val_size:,:]
 age_max = np.max(bones_df['boneage'])
 age_min = np.min(bones_df['boneage'])
 #%%
+# BoneDataset 객체
 class BonesDataset(Dataset):
     def __init__(self, dataframe, image_dir, transform=None):
 
         self.dataframe = dataframe
-
-        
+   
         self.image_dir = image_dir
         self.transform = transform
         
@@ -155,9 +147,7 @@ class BonesDataset(Dataset):
 
         return sample
 
-#%% 
-# Custom Transforms for Image and numerical data
-        
+#%%        
 # Resize and Convert numpy array to tensor
 class ToTensor(object):
     
@@ -190,10 +180,11 @@ class Normalize(object):
     def __call__(self,sample): # __call__ 함수는 생성자로 이미 객체를 생성했을 때 중간에 객체의 값을 바꾸는 경우
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']
         
+        # 이미지 Standardization 코드
         image -= self.mean
         image /= self.std 
-        # Normalization 코드
-        
+
+        # boneage Normalization 코드
         bone_age = (bone_age - self.age_min) / (self.age_max - self.age_min)
         
         
@@ -210,6 +201,7 @@ data_transform = transforms.Compose([
    
    ])     
 # 전이, 안쪽의 작업들을 간단하게 호출하는 함수이다.
+# 즉 여기서는 normalization한 뒤 tensor로 바꿔주는 작업이다.
 
 
 #%%
