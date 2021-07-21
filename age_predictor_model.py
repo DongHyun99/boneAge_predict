@@ -60,7 +60,7 @@ class AgePredictor(nn.Module):
     
     # Define and Initialize Layers
     def __init__(self, block, layers, num_classes=1000):
-        self.inplanes = 64
+        self.inplanes = 64 # 입력 필터 갯수
         super(AgePredictor, self).__init__()
         # ResNet Architecture
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3,  # <-

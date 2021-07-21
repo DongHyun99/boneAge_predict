@@ -195,7 +195,7 @@ def eval_model(model, optimizer, data_loader, age_min, age_max):
 def train_model(model, train_data, val_data, criterion, optimizer, scheduler, num_epochs=25):
 
     for epoch in range(num_epochs):
-        scheduler.step()
+        scheduler.step() # lr step
         model.train()
         running_loss = 0.0 # batch loss 값
         val_running_loss = 0.0 # validation loss 값
@@ -216,7 +216,7 @@ def train_model(model, train_data, val_data, criterion, optimizer, scheduler, nu
 
                 #back propagation (역전파)
                 loss.backward() # 변화도 계산
-                optimizer.step() # lr step
+                optimizer.step() # optim step
             
             running_loss += loss.item() * image.size(0)
 
@@ -241,7 +241,7 @@ def train_model(model, train_data, val_data, criterion, optimizer, scheduler, nu
                 loss = criterion(outputs, age)
 
             val_running_loss += loss.item() * image.size(0)
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/12611'.format(epoch+1,(batch_no+1)*4)) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/800'.format(epoch+1,(batch_no+1)*4)) # 100장마다 얼마나 남았는지 출력
 
         val_loss = val_running_loss / val_dataset_size # epoch 평균 validation loss
 
@@ -255,7 +255,7 @@ def train_model(model, train_data, val_data, criterion, optimizer, scheduler, nu
                     'val_loss': val_loss
                 }
         # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다. 
-        save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.pt'.format(epoch+1, total_loss, val_loss))
+        save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
 
         # loss list 저장
         loss_list.append(total_loss)
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
 
     # Sanity Check
-    print(train_dataset[0])
+    print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
 
     train_data_loader = DataLoader(train_dataset,batch_size=4,shuffle=False,num_workers = 4)
     val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=False,num_workers = 4)
@@ -333,16 +333,7 @@ if __name__ == '__main__':
     scheduler = lr_scheduler.StepLR(optimizer, step_size=12, gamma=0.5)
 
     # train model
-    resnet_model = train_model(age_predictor, train_data_loader, val_data_loader, criterion,optimizer, scheduler, num_epochs=20)
-
-    # evaluate model
-    '''
-    result_array = eval_model(age_predictor,test_data_loader)
-
-    test_df['output'] = result_array
-    test_df['output'] = np.round(test_df['output'], decimals=2)
-    test_df = test_df.reset_index()
-    '''
+    resnet_model = train_model(age_predictor, train_data_loader, val_data_loader, criterion, optimizer, scheduler, num_epochs=NUM_EPOCHS)
 
     # show loss graph
     display_loss()
