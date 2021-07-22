@@ -195,7 +195,6 @@ def eval_model(model, optimizer, data_loader, age_min, age_max):
 def train_model(model, train_data, val_data, criterion, optimizer, scheduler, num_epochs=25):
 
     for epoch in range(num_epochs):
-        scheduler.step() # lr step
         model.train()
         running_loss = 0.0 # batch loss 값
         val_running_loss = 0.0 # validation loss 값
@@ -260,6 +259,8 @@ def train_model(model, train_data, val_data, criterion, optimizer, scheduler, nu
         # loss list 저장
         loss_list.append(total_loss)
         val_loss_list.append(total_loss)
+
+        scheduler.step() # lr step
 
     return model
 
