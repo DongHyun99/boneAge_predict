@@ -79,7 +79,7 @@ class AgePredictor(nn.Module):
         
         
         # Fully Connected layer for gender
-        self.gen_fc_1 = nn.Linear(1, 16)
+        self.gen_fc_1 = DenseNet(num_init_features=1,num_classes= 2)
         self.gen_relu = nn.ReLU()
         
         # Feature Concatenation Layer
