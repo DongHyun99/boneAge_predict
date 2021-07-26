@@ -124,4 +124,4 @@ if __name__ == '__main__':
     predict_df['output'] = np.round(predict_df['output'], decimals=2) # 2에서 반올림
     predict_df = predict_df.reset_index() # 인덱스 초기화 (재배열)
 
-    predict_df.to_csv('predict.csv', sep=',',na_rep='NaN')
+    predict_df.to_csv('result/predict.csv', sep=',',na_rep='NaN')

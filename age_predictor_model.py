@@ -7,7 +7,6 @@ Created on Sun Aug 19 12:17:34 2018
 """
 import torch
 import torch.nn as nn
-from denseNet_model import DenseNet
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
@@ -79,15 +78,17 @@ class AgePredictor(nn.Module):
         
         
         # Fully Connected layer for gender
-        self.gen_fc_1 = DenseNet(num_init_features=1,num_classes= 2)
+        self.gen_fc_1 = nn.Linear(1,32)
         self.gen_relu = nn.ReLU()
         
         # Feature Concatenation Layer
-        self.cat_fc = nn.Linear(16+400,200)
+        self.cat_fc = nn.Linear(32+400,1000)
         self.cat_relu = nn.ReLU()
         
         # Final Fully Connected Layer
-        self.final_fc = nn.Linear(200, num_classes)
+        self.final_fc1 = nn.Linear(1000, 1000)
+        self.final_relu = nn.ReLU()
+        self.final_fc2 = nn.Linear(1000, num_classes)
         
         # Simply using linear layer (w/o sigmoid) led to network predicting negative values for age
         # Therefore input was scaled to range from 0 and 1
@@ -162,15 +163,22 @@ class AgePredictor(nn.Module):
 #       Final FC Layer
 # =============================================================================
         
-        z = self.final_fc(z)
+        z = self.final_fc1(z)
+        z = self.final_relu(z)
+        z = self.final_fc2(z)
         z = self.sigmoid(z)
 
         return z
 
+'''
 #%%
 
 from torchsummary import summary
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-# model = AgePredictor(block = Bottleneck,layers = [3, 4, 23, 3],num_classes = 1).to(device)
-# summary(model, [(1,500,500),(1,1,1)])
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+model = AgePredictor(block = Bottleneck,layers = [3, 4, 23, 3],num_classes = 1).to(device)
+print(model)
+
+summary(model, [(1,500,500),(1,1,1)])
+# %%
+'''

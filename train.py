@@ -299,7 +299,6 @@ display_preds(4)
 if __name__ == '__main__':
     # window에서도 구동 되게하는 코드
     freeze_support()
-
     print('Approx. Mean of Images in Dataset: ',avg_mean)
     print('Approx. Standard Deviation of Images in Dataset: ',avg_std)
 
@@ -312,16 +311,15 @@ if __name__ == '__main__':
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
 
     # Sanity Check
-    print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
+    # print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
 
     train_data_loader = DataLoader(train_dataset,batch_size=4,shuffle=False,num_workers = 4)
     val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=False,num_workers = 4)
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
 
     # Sanity Check 2
-    sample_batch =  next(iter(test_data_loader))
-    print(sample_batch)
-
+    # sample_batch =  next(iter(test_data_loader))
+    # print(sample_batch)
     # Initialize the model
     age_predictor = AgePredictor(block = Bottleneck,layers = [3, 4, 23, 3],num_classes =1)
 
@@ -330,7 +328,7 @@ if __name__ == '__main__':
     
     age_predictor = age_predictor.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(age_predictor.parameters(), lr=1e-3, momentum=0.9, weight_decay=0.9)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=12, gamma=0.5)
 
     # train model
