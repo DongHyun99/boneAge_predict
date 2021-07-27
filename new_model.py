@@ -1,4 +1,6 @@
 # encoding:utf-8
+
+import torch
 import torch.nn as nn
 import math
 
@@ -7,8 +9,8 @@ class Selayer(nn.Module):
     def __init__(self, inplanes):
         super(Selayer, self).__init__()
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.conv1 = nn.Conv2d(inplanes, inplanes / 16, kernel_size=1, stride=1)
-        self.conv2 = nn.Conv2d(inplanes / 16, inplanes, kernel_size=1, stride=1)
+        self.conv1 = nn.Conv2d(inplanes, int(inplanes / 16), kernel_size=1, stride=1)
+        self.conv2 = nn.Conv2d(int(inplanes / 16), inplanes, kernel_size=1, stride=1)
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
 
@@ -95,7 +97,17 @@ class SEResNeXt(nn.Module):
 
         # Fully Connected Layer for  gender
         self.gen_fc_1 = nn.Linear(1,32)
-        self.gen_relu  = nn.ReLu()
+        self.gen_relu  = nn.ReLU()
+
+        # Feature Concatenation Layer
+        self.cat_fc = nn.Linear(32+1000,1000)
+        self.cat_relu = nn.ReLU()
+        
+        # Final Fully Connected Layer
+        self.final_fc1 = nn.Linear(1000, 1000)
+        self.final_relu = nn.ReLU()
+        self.final_fc2 = nn.Linear(1000, num_classes)
+        self.sigmoid = nn.Sigmoid()
 
         # 초기화  (Weight Initialization)
         for m in self.modules(): # 모듈을 차례대로 불러옴
@@ -127,7 +139,11 @@ class SEResNeXt(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    # Forward Pass. x = Image tensor, y = gender tensor
+    def forward(self, x,y):
+# =============================================================================
+#       ResNet Layers        
+# =============================================================================
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -140,7 +156,42 @@ class SEResNeXt(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-
         x = self.fc(x)
+        x = self.resx_relu(x)
+        x = x.view(x.size(0), -1)
 
-        return x
+
+# =============================================================================
+#       Gender Fully Connected Layer
+# =============================================================================
+        y = self.gen_fc_1(y)
+        y = self.gen_relu(y)
+        y = y.view(y.size(0), -1)
+
+        
+# =============================================================================
+#       Feature Concatenation Layer
+# =============================================================================
+      
+        z = torch.cat((x,y),dim = 1)
+        z = self.cat_fc(z)
+        z = self.cat_relu(z)
+
+# =============================================================================
+#       Final FC Layer
+# =============================================================================
+        
+        z = self.final_fc1(z)
+        z = self.final_relu(z)
+        z = self.final_fc2(z)
+        z = self.sigmoid(z)
+
+        return z
+
+
+'''
+#%%
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+model = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes = 1).to(device)
+print(model)
+'''
