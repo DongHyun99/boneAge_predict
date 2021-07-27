@@ -60,7 +60,7 @@ val_bones_df = val_bones_df.reindex(columns=['id', 'boneage', 'male'])
 val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
 # columns는 [id, boneage, male]로 이루어져있음, float으로 바꿔면서 male은 (1.0, 0.0)으로 바뀌게 됨
 
-train_df = bones_df
+train_df = bones_df.iloc[:12600,:]
 val_df = val_bones_df.iloc[:val_dataset_size,:]
 test_df = val_bones_df.iloc[val_dataset_size:,:]
 
@@ -141,12 +141,106 @@ def denormalize(inputs, age_min, age_max):
 def save_checkpoint(state, filename='checkpoint.pt'):
     torch.save(state, save_path + filename)
 
+# ===============================================================================================================
 #%%
-# data 전처리 및 사전 세팅
+# training model, 기본 epochs = 25
+def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+
+    for epoch in range(num_epochs):
+        model.train()
+        total_loss = 0.0
+        running_loss = 0.0
+        val_running_loss = 0.0
+        loss = 0
+
+        for batch_no, batch in enumerate(train_data_loader): # batch마다 train set에 대한 학습 진행
+            # Load batch
+            image = batch['image'].to(device)
+            gender = batch['gender'].to(device)
+            age = batch['bone_age'].to(device)
+
+            optimizer.zero_grad() # 기울기 초기화
+
+            with torch.set_grad_enabled(True): # gradient calculation on
+                
+                # Forward propagation (순전파)
+                outputs = model(image, gender)
+                loss = criterion(outputs, age)
+
+                #back propagation (역전파)
+                loss.backward() # 변화도 계산
+                optimizer.step() # optim step
+
+            
+            running_loss += loss.item()
+
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3150, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+
+        total_loss = running_loss / 3150 # epoch 평균 loss, 12600/4
+
+        print('=================validation evaluate=================')
+
+        model.eval()
+        for batch_no, batch in enumerate(val_data_loader): # validation loss 구하기
+            # Load batch
+            image = batch['image'].to(device)
+            gender = batch['gender'].to(device)
+            age = batch['bone_age'].to(device)
+
+            optimizer.zero_grad()
+            # only forward pass, dont update gradients
+            with torch.no_grad():
+
+                outputs = model(image, gender)
+                loss = criterion(outputs, age)
+
+            val_running_loss += loss.item()
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/200, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+
+        val_loss = val_running_loss / 200 # epoch 평균 validation loss
+
+        print('loss: {}, val_loss: {}'.format(total_loss, val_loss))
+
+        states = {
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': total_loss,
+                    'val_loss': val_loss
+                }
+        # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다. 
+        save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
+
+        # loss list 저장
+        loss_list.append(total_loss)
+        val_loss_list.append(total_loss)
+
+        scheduler.step(epoch) # lr step
+
+    return model
+
+
+#%%
+# loss visualization
+def display_loss():
+    plt.figure()
+    plt.plot([x for x in range(NUM_EPOCHS)], loss_list, label='loss')
+    plt.plot([x for x in range(NUM_EPOCHS)], val_loss_list, label='valication_loss')
+    
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.legend()
+
+    plt.show()
+    plt.savefig('result/loss.png', dpi=200)
+
+
+#%%
+
 if __name__ == '__main__':
     # window에서도 구동 되게하는 코드
     freeze_support()
-    
+
     data_transform = transforms.Compose([
         Normalize(age_min,age_max),
         ToTensor()])
@@ -172,106 +266,10 @@ if __name__ == '__main__':
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
     
     age_predictor = age_predictor.to(device)
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3, weight_decay=0.9)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=12, gamma=0.5)
+    criterion = nn.L1Loss()
+    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=4, cooldown=5, min_lr=0.00001, eps=0.00001, verbose=True)
 
-
-# ===============================================================================================================
-#%%
-# training model, 기본 epochs = 25
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
-
-    for epoch in range(num_epochs):
-        model.train()
-        running_loss = 0.0 # batch loss 값
-        val_running_loss = 0.0 # validation loss 값
-
-        for batch_no, batch in enumerate(train_data_loader): # batch마다 train set에 대한 학습 진행
-            # Load batch
-            image = batch['image'].to(device)
-            gender = batch['gender'].to(device)
-            age = batch['bone_age'].to(device)
-
-            optimizer.zero_grad() # 기울기 초기화
-
-            with torch.set_grad_enabled(True): # gradient calculation on
-                
-                # Forward propagation (순전파)
-                outputs = model(image, gender)
-                loss = criterion(outputs, age)
-
-                #back propagation (역전파)
-                loss.backward() # 변화도 계산
-                optimizer.step() # optim step
-            
-            running_loss += loss.item() * image.size(0)
-
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/12611'.format(epoch+1,(batch_no+1)*4)) # 100장마다 얼마나 남았는지 출력
-
-        total_loss = running_loss / train_dataset_size # epoch 평균 loss
-
-        print('=================validation evaluate=================')
-
-        model.eval()
-        for batch_no, batch in enumerate(val_data_loader): # validation loss 구하기
-            # Load batch
-            image = batch['image'].to(device)
-            gender = batch['gender'].to(device)
-            age = batch['bone_age'].to(device)
-
-            optimizer.zero_grad()
-            # only forward pass, dont update gradients
-            with torch.no_grad():
-
-                outputs = model(image, gender)
-                loss = criterion(outputs, age)
-
-            val_running_loss += loss.item() * image.size(0)
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/800'.format(epoch+1,(batch_no+1)*4)) # 100장마다 얼마나 남았는지 출력
-
-        val_loss = val_running_loss / val_dataset_size # epoch 평균 validation loss
-
-        print('loss: {}, val_loss: {}'.format(total_loss, val_loss))
-
-        states = {
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'loss': total_loss,
-                    'val_loss': val_loss
-                }
-        # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다. 
-        save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
-
-        # loss list 저장
-        loss_list.append(total_loss)
-        val_loss_list.append(total_loss)
-
-        scheduler.step() # lr step
-
-    return model
-
-#%%
-# loss visualization
-def display_loss():
-    plt.figure()
-    plt.plot([x for x in range(NUM_EPOCHS)], loss_list, label='loss')
-    plt.plot([x for x in range(NUM_EPOCHS)], val_loss_list, label='valication_loss')
-    
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.legend()
-
-    plt.show()
-    plt.savefig('result/loss.png', dpi=200)
-
-
-#%%
-
-if __name__ == '__main__':
-    # window에서도 구동 되게하는 코드
-    freeze_support()
 
     # train model
     resnet_model = train_model(age_predictor, criterion, optimizer, scheduler, num_epochs=NUM_EPOCHS)
