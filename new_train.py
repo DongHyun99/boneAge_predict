@@ -11,6 +11,7 @@ from torchvision import transforms
 from new_model import BottleneckX, SEResNeXt
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
 
 # cuda 작동 확인
@@ -42,6 +43,9 @@ size=500 # image scale: 500 x 500
 train_image_filenames = glob.glob(train_dataset_path+'*.png')
 val_image_filenames = glob.glob(val_dataset_path+'*.png')
 test_image_filenames = glob.glob(test_dataset_path+'*.png')
+
+img_mean = 46.48850549076203
+img_std = 42.557445370314426
 
 # Split Train Validation Test
 # Train - 12611 images
@@ -87,6 +91,10 @@ class BonesDataset(Dataset):
 
         img_name = self.image_dir + str(self.dataframe.iloc[idx,0]) + '.png' # 이미지 이름
         image = cv2.imread(img_name,0)
+        
+        clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
+        image = clahe.apply(image)
+
         image = image.astype(np.float64)
         gender = np.atleast_1d(self.dataframe.iloc[idx,2]) # 입력값(성별)을 1차원 이상의 배열로 변환
         bone_age = np.atleast_1d(self.dataframe.iloc[idx,1])
@@ -116,7 +124,10 @@ class ToTensor(object):
 #%%
 class Normalize(object):
     
-    def __init__(self,age_min,age_max):
+    def __init__(self, img_mean, img_std, age_min, age_max):
+        self.mean = img_mean
+        self.std = img_std
+        
         self.age_min = age_min
         self.age_max = age_max
         
@@ -126,6 +137,9 @@ class Normalize(object):
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']        
         bone_age = (bone_age - self.age_min)/ (self.age_max - self.age_min)
         
+        image -= self.mean
+        image /= self.std
+
         return {'image': image,
                 'gender': gender,
                 'bone_age':bone_age} 
@@ -234,14 +248,7 @@ if __name__ == '__main__':
     # window에서도 구동 되게하는 코드
     freeze_support()
 
-<<<<<<< HEAD
-    data_transform = transforms.Compose([Normalize(age_min,age_max),ToTensor()])
-=======
-    data_transform = transforms.Compose([
-        Normalize(age_min,age_max),
-        ToTensor()])
->>>>>>> 13df597a8eda12f8f45c2952f38685c74ed3e7a9
-
+    data_transform = transforms.Compose([Normalize(img_mean,img_std,age_min,age_max),ToTensor()])
     train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,transform = data_transform)
     val_dataset = BonesDataset(dataframe = val_df,image_dir = val_dataset_path,transform = data_transform)
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
@@ -263,15 +270,10 @@ if __name__ == '__main__':
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
     
     age_predictor = age_predictor.to(device)
-<<<<<<< HEAD
+
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, verbose=True)
-=======
-    criterion = nn.L1Loss()
-    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=4, cooldown=5, min_lr=0.00001, eps=0.00001, verbose=True)
->>>>>>> 13df597a8eda12f8f45c2952f38685c74ed3e7a9
+    optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=12, gamma=0.5)
 
 
     # train model

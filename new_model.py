@@ -92,7 +92,7 @@ class SEResNeXt(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Linear(512 * block.expansion, 1000)
+        self.fc = nn.Linear(512 * block.expansion, 400)
         self.resx_relu = nn.ReLU()
 
         # Fully Connected Layer for  gender
@@ -100,11 +100,11 @@ class SEResNeXt(nn.Module):
         self.gen_relu  = nn.ReLU()
 
         # Feature Concatenation Layer
-        self.cat_fc = nn.Linear(16+1000,400)
+        self.cat_fc = nn.Linear(16+400,200)
         self.cat_relu = nn.ReLU()
         
         # Final Fully Connected Layer
-        self.final_fc2 = nn.Linear(400, num_classes)
+        self.final_fc2 = nn.Linear(200, num_classes)
         self.sigmoid = nn.Sigmoid()
 
         # 초기화  (Weight Initialization)
