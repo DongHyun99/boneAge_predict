@@ -2,18 +2,15 @@
 
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
 from torchvision import transforms
 import glob
-import random
-import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 from multiprocessing import freeze_support
-from age_predictor_model import Bottleneck, AgePredictor
-from train import BonesDataset, Normalize, ToTensor
+from new_model import SEResNeXt, BottleneckX
+from new_train import BonesDataset, Normalize, ToTensor
 
 train_dataset_path = 'bone_data/train/'
 test_dataset_path = 'bone_data/test/'
@@ -37,25 +34,6 @@ val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
 
 val_df = val_bones_df.iloc[:val_dataset_size,:]
 test_df = val_bones_df.iloc[val_dataset_size:,:]
-
-size=500
-k=100
-
-random_images = random.sample(population = train_image_filenames,k = k)
-
-means=[]
-stds=[]
-
-for filename in random_images:
-    image = cv2.imread(filename,0)
-    image = cv2.resize(image,(size,size))
-    mean, std = cv2.meanStdDev(image)
-
-    means.append(mean[0][0]) # 값이 2차원 list안에 있기 때문에 다음과 같은 형태로 표현한다.
-    stds.append(std[0][0])
-
-avg_mean = np.mean(means) # 평균의 평균
-avg_std = np.mean(std) # 분산의 평균
 
 age_max = np.max(bones_df['boneage'])
 age_min = np.min(bones_df['boneage'])
@@ -102,17 +80,17 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     data_transform = transforms.Compose([
-        Normalize(avg_mean,avg_std,age_min,age_max),
+        Normalize(age_min,age_max),
         ToTensor()])
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
     
-    age_predictor = AgePredictor(block = Bottleneck,layers = [3, 4, 23, 3],num_classes =1)
+    age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
     model = age_predictor.to(device)
-    criterion = nn.MSELoss()
-    optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
+    criterion = nn.L1Loss()
+    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
 
-    checkpoint = torch.load(save_path+'epoch-7-loss-0.0256-val_loss-0.0336.pt')
+    checkpoint = torch.load(save_path+'epoch-1-loss-0.0312-val_loss-0.0351.tar')
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 

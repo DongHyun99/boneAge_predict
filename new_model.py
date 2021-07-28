@@ -96,17 +96,15 @@ class SEResNeXt(nn.Module):
         self.resx_relu = nn.ReLU()
 
         # Fully Connected Layer for  gender
-        self.gen_fc_1 = nn.Linear(1,32)
+        self.gen_fc_1 = nn.Linear(1,16)
         self.gen_relu  = nn.ReLU()
 
         # Feature Concatenation Layer
-        self.cat_fc = nn.Linear(32+1000,1000)
+        self.cat_fc = nn.Linear(16+1000,400)
         self.cat_relu = nn.ReLU()
         
         # Final Fully Connected Layer
-        self.final_fc1 = nn.Linear(1000, 1000)
-        self.final_relu = nn.ReLU()
-        self.final_fc2 = nn.Linear(1000, num_classes)
+        self.final_fc2 = nn.Linear(400, num_classes)
         self.sigmoid = nn.Sigmoid()
 
         # 초기화  (Weight Initialization)
@@ -181,8 +179,6 @@ class SEResNeXt(nn.Module):
 #       Final FC Layer
 # =============================================================================
         
-        z = self.final_fc1(z)
-        z = self.final_relu(z)
         z = self.final_fc2(z)
         z = self.sigmoid(z)
 
