@@ -234,7 +234,13 @@ if __name__ == '__main__':
     # window에서도 구동 되게하는 코드
     freeze_support()
 
+<<<<<<< HEAD
     data_transform = transforms.Compose([Normalize(age_min,age_max),ToTensor()])
+=======
+    data_transform = transforms.Compose([
+        Normalize(age_min,age_max),
+        ToTensor()])
+>>>>>>> 13df597a8eda12f8f45c2952f38685c74ed3e7a9
 
     train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,transform = data_transform)
     val_dataset = BonesDataset(dataframe = val_df,image_dir = val_dataset_path,transform = data_transform)
@@ -257,9 +263,15 @@ if __name__ == '__main__':
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
     
     age_predictor = age_predictor.to(device)
+<<<<<<< HEAD
     criterion = nn.MSELoss()
     optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, verbose=True)
+=======
+    criterion = nn.L1Loss()
+    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=4, cooldown=5, min_lr=0.00001, eps=0.00001, verbose=True)
+>>>>>>> 13df597a8eda12f8f45c2952f38685c74ed3e7a9
 
 
     # train model
