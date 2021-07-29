@@ -19,13 +19,14 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 # epoch 수 결정
-NUM_EPOCHS = 5
+NUM_EPOCHS = 100
 
 
 # loss list (나중에 plot 하기 위해서)
 loss_list = []
 val_loss_list = []
-
+batch_loss_list = []
+batch_val_loss_list = []
 
 train_dataset_path = 'bone_data/train/'
 test_dataset_path = 'bone_data/test/'
@@ -152,7 +153,8 @@ def save_checkpoint(state, filename='checkpoint.pt'):
 #%%
 # training model, 기본 epochs = 25
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
-
+    best_model = None
+    best_val_loss = None
     for epoch in range(num_epochs):
         model.train()
         total_loss = 0.0
@@ -177,11 +179,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 #back propagation (역전파)
                 loss.backward() # 변화도 계산
                 optimizer.step() # optim step
-
             
             running_loss += loss.item()
-
             if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3150, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+
+            batch_loss_list.append(loss.item())
 
         total_loss = running_loss / 3150 # epoch 평균 loss, 12600/4
 
@@ -204,9 +206,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             val_running_loss += loss.item()
             if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/200, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
-        val_loss = val_running_loss / 200 # epoch 평균 validation loss
+            batch_val_loss_list.append(loss.item())
 
-        print('loss: {}, val_loss: {}'.format(total_loss, val_loss))
+        val_loss = val_running_loss / 200 # epoch 평균 validation loss
+        scheduler.step() # lr step
+        print('loss: {}, val_loss: {}\n==============================================='.format(total_loss, val_loss))
 
         states = {
                     'epoch': epoch,
@@ -215,15 +219,19 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     'loss': total_loss,
                     'val_loss': val_loss
                 }
-        # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다. 
-        save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
+        # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다.
+        if (epoch+1) % 10 == 0: # 10 epoch마다 저장
+            save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
 
         # loss list 저장
         loss_list.append(total_loss)
-        val_loss_list.append(total_loss)
+        val_loss_list.append(val_loss)
 
-        scheduler.step(epoch) # lr step
-
+        if best_val_loss is None or val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model = states
+    
+    save_checkpoint(best_model, filename='BEST_MODEL-val_loss-{:.4f}.tar'.format(val_loss))
     return model
 
 
@@ -232,7 +240,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 def display_loss():
     plt.figure()
     plt.plot([x for x in range(NUM_EPOCHS)], loss_list, label='loss')
-    plt.plot([x for x in range(NUM_EPOCHS)], val_loss_list, label='valication_loss')
     
     plt.xlabel('epoch')
     plt.ylabel('loss')
@@ -241,6 +248,24 @@ def display_loss():
     plt.show()
     plt.savefig('result/loss.png', dpi=200)
 
+    plt.plot([x for x in range(NUM_EPOCHS)], val_loss_list, label='validation_loss')
+
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.legend()
+
+    plt.show()
+    plt.savefig('result/val_loss.png', dpi=200)
+
+    l=pd.DataFrame([loss_list], columns=['loss'])
+    vl=pd.DataFrame([val_loss_list], columns=['val_loss'])
+    bl=pd.DataFrame([batch_loss_list], columns=['batch_loss'])
+    bvl=pd.DataFrame([batch_val_loss_list], columns=['batch_val_loss'])
+
+    l.to_csv('result/loss.csv', sep=',',na_rep='NaN')
+    vl.to_csv('result/valloss.csv', sep=',',na_rep='NaN')
+    bl.to_csv('result/batchloss.csv', sep=',',na_rep='NaN')
+    bvl.to_csv('result/batchvalloss.csv', sep=',',na_rep='NaN')
 
 #%%
 
