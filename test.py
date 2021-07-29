@@ -74,13 +74,16 @@ def eval_model(model, test_data, criterion, optimizer):
         return result_array
 #%%
 
+img_mean = 46.48850549076203
+img_std = 42.557445370314426
+
 if __name__ == '__main__':
     freeze_support()
     
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     data_transform = transforms.Compose([
-        Normalize(age_min,age_max),
+        Normalize(img_mean,img_std,age_min,age_max),
         ToTensor()])
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
@@ -90,7 +93,7 @@ if __name__ == '__main__':
     criterion = nn.L1Loss()
     optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
 
-    checkpoint = torch.load(save_path+'epoch-20-loss-0.0098-val_loss-0.0241')
+    checkpoint = torch.load(save_path+'epoch-20-loss-0.0098-val_loss-0.0241.tar')
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
