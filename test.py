@@ -94,6 +94,7 @@ if __name__ == '__main__':
     optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
 
     checkpoint = torch.load(save_path+'epoch-50-loss-0.0038-val_loss-0.0199.tar')
+
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
