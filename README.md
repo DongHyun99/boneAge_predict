@@ -1,8 +1,8 @@
 # BoneAge-Predict  
 
-<img src="./images/flowchart.png">  
+<img src="./result/result_image/Network Architecture.png">  
 
-입력층으로 X-Ray 사진 파일과 Gender를 받아서 뻐나이를 출력하는 네트워크  
+입력층으로 X-Ray 사진 파일과 Gender를 받아서 뻐나이를 예측하는 딥러닝 모델  
 ## Depemdemcies
 
 * pytorch 1.9.0
