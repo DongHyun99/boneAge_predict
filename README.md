@@ -23,3 +23,17 @@ validation set을 2개로 나누어 측정했다.
 
 bone_data의 test, train, validation 폴더에 각각의 image 파일을 넣어줘야 한다.
       
+## Accuracy
+
+>MAE: 14.04613 (month)  
+
+개선중..
+
+## To-do's
+
+- [ ] image Augmentation (denormalize..)  
+- [ ] Gender, image data shuffle (ShuffleNet?)  
+- [ ] change Activation Function (Layer의 output을 보고 
+    만약 음수 값이 나오지 않는 경우, ReLU를 사용할 필요가 X)
+- [ ] change backbone Network: SE ResNext ->efficientNet V2
+
