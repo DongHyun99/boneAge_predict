@@ -99,7 +99,7 @@ class SEResNeXt(nn.Module):
         self.gen_fc_1 = nn.Linear(1,16)
         self.gen_relu  = nn.ReLU()
 
-        # Feature Concatenation Layer
+        # Feature Fully Connected Layer
         self.cat_fc = nn.Linear(16+400,200)
         self.cat_relu = nn.ReLU()
         
@@ -168,10 +168,14 @@ class SEResNeXt(nn.Module):
 
         
 # =============================================================================
-#       Feature Concatenation Layer
+#       Feature Concatenation & shuffle Layer
 # =============================================================================
       
         z = torch.cat((x,y),dim = 1)
+
+        #idx = torch.randperm(z.shape[0])
+        #z = z[idx].view(z.size())
+        
         z = self.cat_fc(z)
         z = self.cat_relu(z)
 

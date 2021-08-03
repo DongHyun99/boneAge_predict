@@ -90,10 +90,10 @@ if __name__ == '__main__':
     
     age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
     model = age_predictor.to(device)
-    criterion = nn.L1Loss()
-    optimizer = optim.Adam(age_predictor.parameters(), lr=1e-3)
+    criterion = nn.MSELoss()
+    optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
 
-    checkpoint = torch.load(save_path+'epoch-50-loss-0.0038-val_loss-0.0199.tar')
+    checkpoint = torch.load(save_path+'epoch-40-loss-0.0047-val_loss-0.0212.tar')
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

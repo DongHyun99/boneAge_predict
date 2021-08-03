@@ -32,7 +32,9 @@ bone_data의 test, train, validation 폴더에 각각의 image 파일을 넣어�
 ## To-do's
 
 - [ ] image Augmentation (denormalize..)  
-- [ ] Gender, image data shuffle (ShuffleNet?)  
+- [ ] 하얀데이터와 검은데이터의 픽셀 평균을 구해서 두 데이터를 구분해보고 따로 학습,
+test 할 때도 데이터의 픽셀 값에 따라 두 모델을 따로 사용해보기
+- [x] Gender, image data shuffle -> 랜덤으로 넣으면 loss가 올라가므로 랜덤하지 않게 넣는 방법을 찾아볼 것
 - [ ] change Activation Function (Layer의 output을 보고 
     만약 음수 값이 나오지 않는 경우, ReLU를 사용할 필요가 X)
 - [ ] change backbone Network: SE ResNext ->efficientNet V2

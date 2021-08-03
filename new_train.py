@@ -19,7 +19,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 # epoch 수 결정
-NUM_EPOCHS = 100
+NUM_EPOCHS = 10
 
 
 # loss list (나중에 plot 하기 위해서)
@@ -93,8 +93,8 @@ class BonesDataset(Dataset):
         img_name = self.image_dir + str(self.dataframe.iloc[idx,0]) + '.png' # 이미지 이름
         image = cv2.imread(img_name,0)
         
-        clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
-        image = clahe.apply(image)
+        # clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
+        # image = clahe.apply(image)
 
         image = image.astype(np.float64)
         gender = np.atleast_1d(self.dataframe.iloc[idx,2]) # 입력값(성별)을 1차원 이상의 배열로 변환
@@ -114,7 +114,16 @@ class ToTensor(object):
     def __call__(self, sample): # __init__으로 초기화된 인스턴스를 함수로 취급할 때 불러오게 하는 함수
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']
 
-        image = cv2.resize(image,(size, size)) #500 x 500으로 resize
+        # image = cv2.resize(image,(size, size)) #500 x 500으로 resize
+        val = 500
+        if image.shape[0]>image.shape[1]: # row>column
+            val = 500/image.shape[1]
+        else: val = 500/image.shape[0]
+        image = cv2.resize(image, dsize=(0,0), fx= val, fy = val)
+        r = int(image.shape[0]/2)
+        c = int(image.shape[1]/2)
+        image = image[r-250 : r+250, c-250 : c+250]
+
         image = np.expand_dims(image, axis=0) # 행 차원을 하나 추가한다.
 
         return {'image': torch.from_numpy(image).float(),
@@ -181,7 +190,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 optimizer.step() # optim step
             
             running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3150, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/1575, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_loss_list.append(loss.item())
 
@@ -204,7 +213,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 loss = criterion(outputs, age)
 
             val_running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/200, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/100, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_val_loss_list.append(loss.item())
 
@@ -230,8 +239,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         if best_val_loss is None or val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model = states
-    
-    save_checkpoint(best_model, filename='BEST_MODEL-val_loss-{:.4f}.tar'.format(val_loss))
+            save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(states['epoch']+1,val_loss))
     return model
 
 
@@ -294,7 +302,9 @@ if __name__ == '__main__':
     # Set loss as mean squared error (for continuous output)
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
     
+    age_predictor = nn.DataParallel(age_predictor)
     age_predictor = age_predictor.to(device)
+    
 
     criterion = nn.MSELoss()
     optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
@@ -303,6 +313,7 @@ if __name__ == '__main__':
 
     # train model
     resnet_model = train_model(age_predictor, criterion, optimizer, scheduler, num_epochs=NUM_EPOCHS)
+    
 
     # show loss graph
     display_loss()
