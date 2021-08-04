@@ -9,7 +9,7 @@ from torchvision import transforms
 import glob
 import numpy as np
 from multiprocessing import freeze_support
-from new_model import SEResNeXt, BottleneckX
+from model.new_model import SEResNeXt, BottleneckX
 from new_train import BonesDataset, Normalize, ToTensor
 
 train_dataset_path = 'bone_data/train/'
@@ -89,12 +89,12 @@ if __name__ == '__main__':
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
     
     age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
-    age_predictor = nn.DataParallel(age_predictor)
+    # age_predictor = nn.DataParallel(age_predictor)
     model = age_predictor.to(device)
     criterion = nn.MSELoss()
     optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
 
-    checkpoint = torch.load(save_path+'epoch-10-loss-0.0278-val_loss-0.0368.tar')
+    checkpoint = torch.load(save_path+'epoch-20-loss-0.0079-val_loss-0.0356.tar')
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

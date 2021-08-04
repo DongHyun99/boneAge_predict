@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 #15555, 15588, 15507
 
-train_dataset_path = 'bone_data/train/11488.png'
+train_dataset_path = 'bone_data/validation/1583.png'
 
 img = cv2.imread(train_dataset_path,cv2.IMREAD_GRAYSCALE)
 
