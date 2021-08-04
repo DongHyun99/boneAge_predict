@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
+import datetime
 
 # cuda 작동 확인
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -190,11 +191,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 optimizer.step() # optim step
             
             running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/1575, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3150, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_loss_list.append(loss.item())
 
-        total_loss = running_loss / 3150 # epoch 평균 loss, 12600/4
+        total_loss = running_loss / 3150 # epoch 평균 loss, 12600/4 = 3150, 21600/8 = 1575
 
         print('=================validation evaluate=================')
 
@@ -213,13 +214,13 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 loss = criterion(outputs, age)
 
             val_running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/100, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/200, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_val_loss_list.append(loss.item())
 
-        val_loss = val_running_loss / 200 # epoch 평균 validation loss
+        val_loss = val_running_loss / 200 # epoch 평균 validation loss, 800/4 = 200, 800/8 = 100
         scheduler.step() # lr step
-        print('loss: {}, val_loss: {}\n==============================================='.format(total_loss, val_loss))
+        print('\ntime: {}\nloss: {}, val_loss: {}\n==============================================='.format(datetime.datetime.now(),total_loss, val_loss))
 
         states = {
                     'epoch': epoch,
@@ -229,7 +230,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     'val_loss': val_loss
                 }
         # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다.
-        if (epoch+1) % 10 == 0: # 10 epoch마다 저장
+        if (epoch+1) % 5 == 0: # 10 epoch마다 저장
             save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
 
         # loss list 저장
@@ -239,7 +240,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         if best_val_loss is None or val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model = states
-            save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(states['epoch']+1,val_loss))
+    save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(states['epoch']+1,val_loss))
     return model
 
 
@@ -312,6 +313,7 @@ if __name__ == '__main__':
 
 
     # train model
+    print('================= train start =================\n', datetime.datetime.now())
     resnet_model = train_model(age_predictor, criterion, optimizer, scheduler, num_epochs=NUM_EPOCHS)
     
 
