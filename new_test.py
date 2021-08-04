@@ -83,7 +83,7 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     data_transform = transforms.Compose([
-        Normalize(img_mean,img_std,age_min,age_max),
+        Normalize(age_min,age_max),
         ToTensor()])
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)

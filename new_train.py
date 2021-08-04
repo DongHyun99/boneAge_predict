@@ -8,19 +8,26 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from new_model import BottleneckX, SEResNeXt
+from model.new_model import BottleneckX, SEResNeXt
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
 import datetime
+import random
 
 # cuda 작동 확인
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+# For reproducibility use the seeds below (임의 값 고정)
+torch.manual_seed(1498920)
+torch.cuda.manual_seed(1498920)
+np.random.seed(1498920)
+random.seed(1498920)
+torch.backends.cudnn.deterministic=True
 
 # epoch 수 결정
-NUM_EPOCHS = 10
+NUM_EPOCHS = 20
 
 
 # loss list (나중에 plot 하기 위해서)
@@ -46,8 +53,8 @@ train_image_filenames = glob.glob(train_dataset_path+'*.png')
 val_image_filenames = glob.glob(val_dataset_path+'*.png')
 test_image_filenames = glob.glob(test_dataset_path+'*.png')
 
-img_mean = 46.48850549076203
-img_std = 42.557445370314426
+# img_mean = 46.48850549076203
+# img_std = 42.557445370314426
 
 # Split Train Validation Test
 # Train - 12611 images
@@ -93,9 +100,22 @@ class BonesDataset(Dataset):
 
         img_name = self.image_dir + str(self.dataframe.iloc[idx,0]) + '.png' # 이미지 이름
         image = cv2.imread(img_name,0)
-        
-        # clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
-        # image = clahe.apply(image)
+
+        # image = cv2.resize(image,(size, size)) #500 x 500으로 resize
+        val = 500
+        if image.shape[0]>image.shape[1]: # row>column
+            val = 500/image.shape[1]
+        else: val = 500/image.shape[0]
+        image = cv2.resize(image, dsize=(0,0), fx= val, fy = val)
+
+        r = int(image.shape[0]/2)
+        c = int(image.shape[1]/2)
+        image = image[r-250 : r+250, c-250 : c+250]
+
+        image = cv2.subtract(image, np.average(image.flatten())-40)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+        image = clahe.apply(image)
+        # image = cv2.medianBlur(image,3)
 
         image = image.astype(np.float64)
         gender = np.atleast_1d(self.dataframe.iloc[idx,2]) # 입력값(성별)을 1차원 이상의 배열로 변환
@@ -115,16 +135,6 @@ class ToTensor(object):
     def __call__(self, sample): # __init__으로 초기화된 인스턴스를 함수로 취급할 때 불러오게 하는 함수
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']
 
-        # image = cv2.resize(image,(size, size)) #500 x 500으로 resize
-        val = 500
-        if image.shape[0]>image.shape[1]: # row>column
-            val = 500/image.shape[1]
-        else: val = 500/image.shape[0]
-        image = cv2.resize(image, dsize=(0,0), fx= val, fy = val)
-        r = int(image.shape[0]/2)
-        c = int(image.shape[1]/2)
-        image = image[r-250 : r+250, c-250 : c+250]
-
         image = np.expand_dims(image, axis=0) # 행 차원을 하나 추가한다.
 
         return {'image': torch.from_numpy(image).float(),
@@ -135,9 +145,7 @@ class ToTensor(object):
 #%%
 class Normalize(object):
     
-    def __init__(self, img_mean, img_std, age_min, age_max):
-        self.mean = img_mean
-        self.std = img_std
+    def __init__(self,age_min, age_max):
         
         self.age_min = age_min
         self.age_max = age_max
@@ -147,9 +155,6 @@ class Normalize(object):
     def __call__(self,sample):
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']        
         bone_age = (bone_age - self.age_min)/ (self.age_max - self.age_min)
-        
-        image -= self.mean
-        image /= self.std
 
         return {'image': image,
                 'gender': gender,
@@ -282,7 +287,7 @@ if __name__ == '__main__':
     # window에서도 구동 되게하는 코드
     freeze_support()
 
-    data_transform = transforms.Compose([Normalize(img_mean,img_std,age_min,age_max),ToTensor()])
+    data_transform = transforms.Compose([Normalize(age_min,age_max),ToTensor()])
     train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,transform = data_transform)
     val_dataset = BonesDataset(dataframe = val_df,image_dir = val_dataset_path,transform = data_transform)
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
@@ -303,7 +308,7 @@ if __name__ == '__main__':
     # Set loss as mean squared error (for continuous output)
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
     
-    age_predictor = nn.DataParallel(age_predictor)
+    # age_predictor = nn.DataParallel(age_predictor)
     age_predictor = age_predictor.to(device)
     
 
