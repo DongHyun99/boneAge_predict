@@ -189,9 +189,8 @@ class SEResNeXt(nn.Module):
         return z
 
 
-'''
+
 #%%
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
 model = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes = 1).to(device)
 print(model)
-'''

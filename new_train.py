@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from model.new_model import BottleneckX, SEResNeXt
+from model.EfficientNet_v2 import EffNetV2, effnetv2_s, effnetv2_m, effnetv2_l, effnetv2_xl
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -19,6 +19,12 @@ import random
 # cuda 작동 확인
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+# For reproducibility use the seeds below (임의 값 고정)
+torch.manual_seed(1498920)
+torch.cuda.manual_seed(1498920)
+np.random.seed(1498920)
+random.seed(1498920)
+torch.backends.cudnn.deterministic=True
 
 # epoch 수 결정
 NUM_EPOCHS = 100
@@ -94,8 +100,7 @@ class BonesDataset(Dataset):
 
         img_name = self.image_dir + str(self.dataframe.iloc[idx,0]) + '.png' # 이미지 이름
         image = cv2.imread(img_name,0)
-
-        # image = cv2.resize(image,(size, size)) #500 x 500으로 resize
+        '''
         val = 500
         if image.shape[0]>image.shape[1]: # row>column
             val = 500/image.shape[1]
@@ -105,7 +110,7 @@ class BonesDataset(Dataset):
         r = int(image.shape[0]/2)
         c = int(image.shape[1]/2)
         image = image[r-250 : r+250, c-250 : c+250]
-
+        '''
         image = cv2.subtract(image, np.average(image.flatten())-40)
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
         image = clahe.apply(image)
@@ -128,7 +133,8 @@ class ToTensor(object):
     
     def __call__(self, sample): # __init__으로 초기화된 인스턴스를 함수로 취급할 때 불러오게 하는 함수
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']
-
+        
+        image = cv2.resize(image,(size, size)) #500 x 500으로 resize
         image = np.expand_dims(image, axis=0) # 행 차원을 하나 추가한다.
 
         return {'image': torch.from_numpy(image).float(),
@@ -229,7 +235,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     'val_loss': val_loss
                 }
         # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다.
-        if (epoch+1) % 5 == 0: # 10 epoch마다 저장
+        if (epoch+1) % 10 == 0: # 10 epoch마다 저장
             save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
 
         # loss list 저장
@@ -297,7 +303,7 @@ if __name__ == '__main__':
     # sample_batch =  next(iter(test_data_loader))
     # print(sample_batch)
     # Initialize the model
-    age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
+    age_predictor = effnetv2_s(num_classes=1)
 
     # Set loss as mean squared error (for continuous output)
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler
@@ -313,8 +319,15 @@ if __name__ == '__main__':
 
     # train model
     print('================= train start =================\n', datetime.datetime.now())
-    resnet_model = train_model(age_predictor, criterion, optimizer, scheduler, num_epochs=NUM_EPOCHS)
+    efficientnet_model = train_model(age_predictor, criterion, optimizer, scheduler, num_epochs=NUM_EPOCHS)
     
 
     # show loss graph
     display_loss()
+
+
+    #sample_batch = next(iter(val_data_loader))
+    #image = sample_batch['image'][2]
+    #img = image.permute(1,2,0)
+    #plt.imshow(img, cmap='gray')
+    #plt.show()

@@ -35,8 +35,8 @@ val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
 val_df = val_bones_df.iloc[:val_dataset_size,:]
 test_df = val_bones_df.iloc[val_dataset_size:,:]
 
-age_max = np.max(bones_df['boneage'])
-age_min = np.min(bones_df['boneage'])
+age_max = np.max(bones_df['boneage']) # 228
+age_min = np.min(bones_df['boneage']) # 1
 
 #%%
 def denormalize(inputs, age_min, age_max):

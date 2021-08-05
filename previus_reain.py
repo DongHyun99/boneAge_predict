@@ -13,17 +13,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
-import random
 
 # cuda 작동 확인
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-# For reproducibility use the seeds below (임의 값 고정)
-torch.manual_seed(1498920)
-torch.cuda.manual_seed(1498920)
-np.random.seed(1498920)
-random.seed(1498920)
-torch.backends.cudnn.deterministic=True
 
 # epoch 수 결정
 NUM_EPOCHS = 100
