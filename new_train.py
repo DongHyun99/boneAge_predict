@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from model.EfficientNet_v2 import EffNetV2, effnetv2_s, effnetv2_m, effnetv2_l, effnetv2_xl
+from model.EfficientNet_v2 import EffNetV2
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -158,7 +158,11 @@ class Normalize(object):
 
         return {'image': image,
                 'gender': gender,
-                'bone_age':bone_age} 
+                'bone_age':bone_age}
+
+def denormalize(inputs, age_min, age_max):
+    return inputs * (age_max - age_min) + age_min
+
 #%%
 # 학습 데이터 저장 메소드
 def save_checkpoint(state, filename='checkpoint.pt'):
@@ -194,7 +198,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 #back propagation (역전파)
                 loss.backward() # 변화도 계산
                 optimizer.step() # optim step
-            
+
             running_loss += loss.item()
             if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3150, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
@@ -235,7 +239,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     'val_loss': val_loss
                 }
         # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다.
-        if (epoch+1) % 10 == 0: # 10 epoch마다 저장
+        if (epoch+1) % 1 == 0: # 10 epoch마다 저장
             save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
 
         # loss list 저장
@@ -303,7 +307,8 @@ if __name__ == '__main__':
     # sample_batch =  next(iter(test_data_loader))
     # print(sample_batch)
     # Initialize the model
-    age_predictor = effnetv2_s(num_classes=1)
+
+    age_predictor = EffNetV2(num_classes=1)
 
     # Set loss as mean squared error (for continuous output)
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler

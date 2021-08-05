@@ -125,9 +125,7 @@ class ToTensor(object):
 #%%
 class Normalize(object):
     
-    def __init__(self, img_mean, img_std, age_min, age_max):
-        self.mean = img_mean
-        self.std = img_std
+    def __init__(self, age_min, age_max):
         
         self.age_min = age_min
         self.age_max = age_max
@@ -137,13 +135,14 @@ class Normalize(object):
     def __call__(self,sample):
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']        
         bone_age = (bone_age - self.age_min)/ (self.age_max - self.age_min)
-        
-        image -= self.mean
-        image /= self.std
 
         return {'image': image,
                 'gender': gender,
                 'bone_age':bone_age} 
+
+def denormalize(inputs, age_min, age_max):
+    return inputs * (age_max - age_min) + age_min
+
 #%%
 # 학습 데이터 저장 메소드
 def save_checkpoint(state, filename='checkpoint.pt'):
@@ -175,6 +174,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 # Forward propagation (순전파)
                 outputs = model(image, gender)
                 loss = criterion(outputs, age)
+                
+                #preds = outputs.cpu().detach().numpy()
+                #preds = preds.reshape(preds.shape[0])
+                #preds = denormalize(preds, age_min, age_max)
+                #print(preds)
 
                 #back propagation (역전파)
                 loss.backward() # 변화도 계산
@@ -273,7 +277,7 @@ if __name__ == '__main__':
     # window에서도 구동 되게하는 코드
     freeze_support()
 
-    data_transform = transforms.Compose([Normalize(img_mean,img_std,age_min,age_max),ToTensor()])
+    data_transform = transforms.Compose([Normalize(age_min,age_max),ToTensor()])
     train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,transform = data_transform)
     val_dataset = BonesDataset(dataframe = val_df,image_dir = val_dataset_path,transform = data_transform)
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
