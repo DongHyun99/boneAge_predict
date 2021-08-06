@@ -38,5 +38,5 @@ test 할 때도 데이터의 픽셀 값에 따라 두 모델을 따로 사용해
 - [x] Gender, image data shuffle -> 랜덤으로 넣으면 loss가 올라가므로 랜덤하지 않게 넣는 방법을 찾아볼 것  
 - [ ] change Activation Function (Layer의 output을 보고 
     만약 음수 값이 나오지 않는 경우, ReLU를 사용할 필요가 X)
-- [ ] change backbone Network: SE ResNext ->efficientNet V2
+- [ ] change backbone Network: SE ResNext ->efficientNet V2 (classification으로 되어있어서 regression으로 바꿔야 함)
 
