@@ -25,7 +25,7 @@ bone_data의 test, train, validation 폴더에 각각의 image 파일을 넣어�
       
 ## Accuracy
 
->MAE: 14.04613 (month)  
+>MAE: 12~14.04613 (month)  
 
 개선중..
 
