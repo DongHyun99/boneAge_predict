@@ -2,11 +2,12 @@ import torch
 import torch.nn as nn
 import math
 import timm
+from torchsummary import summary
 
 class EffNetV2(nn.Module):
     def __init__(self, num_classes=1000):
         super(EffNetV2, self).__init__()
-        self.effv2 = timm.create_model('efficientnetv2_s', num_classes=400, in_chans=1)
+        self.effv2 = timm.create_model('efficientnetv2_s', num_classes=400, in_chans=1, pretrained=False)
         self.eff_relu = nn.ReLU()
 
         # Fully Connected Layer for  gender
@@ -81,6 +82,12 @@ class EffNetV2(nn.Module):
 # 'efficientnetv2_rw_s'
 # 'efficientnetv2_s'
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-model = EffNetV2(num_classes=1)
-print(model)
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+#model = EffNetV2(num_classes=1).to(device)
+#summary(model, [(1,500,500), (1,1,1)])
+#print(model)
+
+#from pprint import pprint
+#model_names = timm.list_models('*resnext*')
+#pprint(model_names)
+
