@@ -24,40 +24,37 @@ def _make_divisible(v, divisor, min_value=None):
         new_v += divisor
     return new_v
 
-
-# SiLU (Swish) activation function
-if hasattr(nn, 'SiLU'):
-    SiLU = nn.SiLU
-else:
-    # For compatibility with old PyTorch versions
-    class SiLU(nn.Module):
-        def forward(self, x):
-            return x * torch.sigmoid(x)
-
  
-class SELayer(nn.Module):
-    def __init__(self, inp, oup, reduction=4):
+class SELayer(nn.Module): 
+    
+    # gap - conv 1x1 - ReLU - conv 1x1 - sigmoid
+    def __init__(self, inp, inplanes):
         super(SELayer, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-                nn.Linear(oup, _make_divisible(inp // reduction, 8)),
-                SiLU(),
-                nn.Linear(_make_divisible(inp // reduction, 8), oup),
-                nn.Sigmoid()
-        )
+        self.global_avgpool = nn.AdaptiveAvgPool2d(1)
+        self.conv1 = nn.Conv2d(inplanes, inp, kernel_size=1, stride=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = nn.Conv2d(inp, inplanes, kernel_size=1, stride=1)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y
+
+        out = self.global_avgpool(x)
+
+        out = self.conv1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.sigmoid(out)
+
+        return x * out
 
 
 def conv_3x3_bn(inp, oup, stride):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
         nn.BatchNorm2d(oup),
-        SiLU()
+        nn.ReLU(inplace=True),
+        nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
     )
 
 
@@ -65,14 +62,15 @@ def conv_1x1_bn(inp, oup):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
         nn.BatchNorm2d(oup),
-        SiLU()
+        nn.ReLU(inplace=True)
     )
 
 
 class MBConv(nn.Module):
+    #논문에 의하면 초기 stage: Fused-MBConv / 이후: MBConv 사용하는 것이 학습속도에 좋다고 한다.
     def __init__(self, inp, oup, stride, expand_ratio, use_se):
         super(MBConv, self).__init__()
-        assert stride in [1, 2]
+        assert stride in [1, 2] # stride는 1, 2 이외에는 사용 불가능
 
         hidden_dim = round(inp * expand_ratio)
         self.identity = stride == 1 and inp == oup
@@ -81,11 +79,11 @@ class MBConv(nn.Module):
                 # pw
                 nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(hidden_dim),
-                SiLU(),
+                nn.ReLU(inplace=True),
                 # dw
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
                 nn.BatchNorm2d(hidden_dim),
-                SiLU(),
+                nn.ReLU(inplace=True),
                 SELayer(inp, hidden_dim),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
@@ -96,7 +94,7 @@ class MBConv(nn.Module):
                 # fused
                 nn.Conv2d(inp, hidden_dim, 3, stride, 1, bias=False),
                 nn.BatchNorm2d(hidden_dim),
-                SiLU(),
+                nn.ReLU(inplace=True),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
@@ -132,15 +130,15 @@ class EffNetV2(nn.Module):
         self.conv = conv_1x1_bn(input_channel, output_channel)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(output_channel, 400)
-        self.eff_relu = nn.ReLU()
+        self.eff_relu = nn.ReLU(inplace=True)
 
         # Fully Connected Layer for  gender
         self.gen_fc_1 = nn.Linear(1,16)
-        self.gen_relu  = nn.ReLU()
+        self.gen_relu  = nn.ReLU(inplace=True)
 
         # Feature Fully Connected Layer
         self.cat_fc = nn.Linear(16+400,200)
-        self.cat_relu = nn.ReLU()
+        self.cat_relu = nn.ReLU(inplace=True)
         
         # Final Fully Connected Layer
         self.final_fc2 = nn.Linear(200, num_classes)
@@ -158,10 +156,10 @@ class EffNetV2(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
-        print(x)
 
         x = self.eff_relu(x)
         x = x.view(x.size(0), -1)
+        print(x)
         
 # =============================================================================
 #       Gender Fully Connected Layer
