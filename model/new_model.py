@@ -151,10 +151,10 @@ class SEResNeXt(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        print(x)
         x = self.resx_relu(x)
         x = x.view(x.size(0), -1)
 
@@ -190,6 +190,6 @@ class SEResNeXt(nn.Module):
 
 
 #%%
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-model = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes = 1).to(device)
-print(model)
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+#model = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes = 1).to(device)
+#print(model)

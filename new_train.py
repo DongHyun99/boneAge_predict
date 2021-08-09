@@ -111,7 +111,6 @@ class BonesDataset(Dataset):
         c = int(image.shape[1]/2)
         image = image[r-250 : r+250, c-250 : c+250]
         '''
-        image = cv2.subtract(image, np.average(image.flatten())-40)
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
         image = clahe.apply(image)
         # image = cv2.medianBlur(image,3)
