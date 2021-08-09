@@ -1,137 +1,150 @@
 import torch
 import torch.nn as nn
 import math
-import timm
-from timm.models.resnet import _create_resnet
-from torchsummary import summary
 
-class Bottleneck(nn.Module):
-    expansion = 4
+__all__ = ['effnetv2_s', 'effnetv2_m', 'effnetv2_l', 'effnetv2_xl']
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, cardinality=1, base_width=64,
-                 reduce_first=1, dilation=1, first_dilation=None, act_layer=nn.ReLU, norm_layer=nn.BatchNorm2d,
-                 attn_layer=None, aa_layer=None, drop_block=None, drop_path=None):
-        super(Bottleneck, self).__init__()
 
-        width = int(math.floor(planes * (base_width / 64)) * cardinality)
-        first_planes = width // reduce_first
-        outplanes = planes * self.expansion
-        first_dilation = first_dilation or dilation
-        use_aa = aa_layer is not None and (stride == 2 or first_dilation != dilation)
+def _make_divisible(v, divisor, min_value=None):
+    """
+    This function is taken from the original tf repo.
+    It ensures that all layers have a channel number that is divisible by 8
+    It can be seen here:
+    https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/mobilenet.py
+    :param v:
+    :param divisor:
+    :param min_value:
+    :return:
+    """
+    if min_value is None:
+        min_value = divisor
+    new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
+    # Make sure that round down does not go down by more than 10%.
+    if new_v < 0.9 * v:
+        new_v += divisor
+    return new_v
 
-        self.conv1 = nn.Conv2d(inplanes, first_planes, kernel_size=1, bias=False)
-        self.bn1 = norm_layer(first_planes)
-        #self.act1 = act_layer(inplace=True)
 
-        self.conv2 = nn.Conv2d(
-            first_planes, width, kernel_size=3, stride=1 if use_aa else stride,
-            padding=first_dilation, dilation=first_dilation, groups=cardinality, bias=False)
-        self.bn2 = norm_layer(width)
-        #self.act2 = act_layer(inplace=True)
-        self.aa = aa_layer(channels=width, stride=stride) if use_aa else None
+# SiLU (Swish) activation function
+if hasattr(nn, 'SiLU'):
+    SiLU = nn.SiLU
+else:
+    # For compatibility with old PyTorch versions
+    class SiLU(nn.Module):
+        def forward(self, x):
+            return x * torch.sigmoid(x)
 
-        self.conv3 = nn.Conv2d(width, outplanes, kernel_size=1, bias=False)
-        self.bn3 = norm_layer(outplanes)
-
-        self.se = Selayer(outplanes)
-        self.act3 = act_layer(inplace=True)
-        self.downsample = downsample
-        self.stride = stride
-        self.dilation = dilation
-        self.drop_block = drop_block
-        self.drop_path = drop_path
-
-    def zero_init_last_bn(self):
-        nn.init.zeros_(self.bn3.weight)
-
-    def forward(self, x):
-        shortcut = x
-
-        x = self.conv1(x)
-        x = self.bn1(x)
-        if self.drop_block is not None:
-            x = self.drop_block(x)
-        #x = self.act1(x)
-
-        x = self.conv2(x)
-        x = self.bn2(x)
-        if self.drop_block is not None:
-            x = self.drop_block(x)
-        #x = self.act2(x)
-        if self.aa is not None:
-            x = self.aa(x)
-
-        x = self.conv3(x)
-        x = self.bn3(x)
-        if self.drop_block is not None:
-            x = self.drop_block(x)
-
-        if self.se is not None:
-            x = self.se(x)
-
-        if self.drop_path is not None:
-            x = self.drop_path(x)
-
-        if self.downsample is not None:
-            shortcut = self.downsample(shortcut)
-        x += shortcut
-        x = self.act3(x)
-
-        return x
-
-class Selayer(nn.Module):
-
-    def __init__(self, inplanes):
-        super(Selayer, self).__init__()
-        self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.conv1 = nn.Conv2d(inplanes, int(inplanes / 16), kernel_size=1, stride=1)
-        self.conv2 = nn.Conv2d(int(inplanes / 16), inplanes, kernel_size=1, stride=1)
-        self.relu = nn.ReLU(inplace=True)
-        self.sigmoid = nn.Sigmoid()
+ 
+class SELayer(nn.Module):
+    def __init__(self, inp, oup, reduction=4):
+        super(SELayer, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+                nn.Linear(oup, _make_divisible(inp // reduction, 8)),
+                SiLU(),
+                nn.Linear(_make_divisible(inp // reduction, 8), oup),
+                nn.Sigmoid()
+        )
 
     def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y
 
-        out = self.global_avgpool(x)
 
-        out = self.conv1(out)
-        out = self.relu(out)
+def conv_3x3_bn(inp, oup, stride):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+        nn.BatchNorm2d(oup),
+        SiLU()
+    )
 
-        out = self.conv2(out)
-        out = self.sigmoid(out)
 
-        return x * out
+def conv_1x1_bn(inp, oup):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+        nn.BatchNorm2d(oup),
+        SiLU()
+    )
 
-class global_pool(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.avgpool = nn.AdaptiveAvgPool2d(1)
+
+class MBConv(nn.Module):
+    def __init__(self, inp, oup, stride, expand_ratio, use_se):
+        super(MBConv, self).__init__()
+        assert stride in [1, 2]
+
+        hidden_dim = round(inp * expand_ratio)
+        self.identity = stride == 1 and inp == oup
+        # MBConv
+        if use_se: 
+            self.conv = nn.Sequential(
+                # pw
+                nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(hidden_dim),
+                SiLU(),
+                # dw
+                nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
+                nn.BatchNorm2d(hidden_dim),
+                SiLU(),
+                SELayer(inp, hidden_dim),
+                # pw-linear
+                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
+            )
+        # Fused-MBConv
+        else:
+            self.conv = nn.Sequential(
+                # fused
+                nn.Conv2d(inp, hidden_dim, 3, stride, 1, bias=False),
+                nn.BatchNorm2d(hidden_dim),
+                SiLU(),
+                # pw-linear
+                nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
+            )
+
 
     def forward(self, x):
-        x = self.avgpool(x)
-
-        return x
+        if self.identity:
+            return x + self.conv(x)
+        else:
+            return self.conv(x)
 
 
 class EffNetV2(nn.Module):
-    def __init__(self, num_classes=1000):
+    def __init__(self, cfgs, num_classes=1000, width_mult=1.):
         super(EffNetV2, self).__init__()
-        model_args = dict(block=Bottleneck, layers=[3, 4, 23, 3], cardinality=32, base_width=4,block_args=dict(attn_layer='se'))
-        self.effv2 = _create_resnet('seresnext101_32x4d', num_classes=400, in_chans=1, pretrained=False, **model_args)
-        self.effv2.global_pool = global_pool()
-        self.eff_relu = nn.ReLU()
+        self.cfgs = cfgs
 
-        # Fully Connected Layer for  gender
-        self.gen_fc_1 = nn.Linear(1,16)
-        self.gen_relu  = nn.ReLU()
+        # building first layer
+        input_channel = _make_divisible(24 * width_mult, 8)
+        layers = [conv_3x3_bn(3, input_channel, 2)]
+        # building inverted residual blocks
+        block = MBConv
+        for t, c, n, s, use_se in self.cfgs:
+            output_channel = _make_divisible(c * width_mult, 8)
+            for i in range(n):
+                layers.append(block(input_channel, output_channel, s if i == 0 else 1, t, use_se))
+                input_channel = output_channel
+        self.features = nn.Sequential(*layers)
+        # building last several layers
+        output_channel = _make_divisible(1792 * width_mult, 8) if width_mult > 1.0 else 1792
+        self.conv = conv_1x1_bn(input_channel, output_channel)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.classifier = nn.Linear(output_channel, num_classes)
 
-        # Feature Fully Connected Layer
-        self.cat_fc = nn.Linear(16+400,200)
-        self.cat_relu = nn.ReLU()
-        
-        # Final Fully Connected Layer
-        self.final_fc2 = nn.Linear(200, num_classes)
-        self.sigmoid = nn.Sigmoid()
+        self._initialize_weights()
 
+    def forward(self, x):
+        x = self.features(x)
+        x = self.conv(x)
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
+    def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -145,60 +158,69 @@ class EffNetV2(nn.Module):
                 m.weight.data.normal_(0, 0.001)
                 m.bias.data.zero_()
 
-    def forward(self, x, y):
-# =============================================================================
-#       EfficientNet Layers        
-# =============================================================================
-        x = self.effv2(x)
-        print(x)
-        x = self.eff_relu(x)
-        x = x.view(x.size(0), -1)
 
-# =============================================================================
-#       Gender Fully Connected Layer
-# =============================================================================
-        y = self.gen_fc_1(y)
-        y = self.gen_relu(y)
-        y = y.view(y.size(0), -1)
-
-        
-# =============================================================================
-#       Feature Concatenation & shuffle Layer
-# =============================================================================
-      
-        z = torch.cat((x,y),dim = 1)
-
-        #idx = torch.randperm(z.shape[0])
-        #z = z[idx].view(z.size())
-        
-        z = self.cat_fc(z)
-        z = self.cat_relu(z)
+def effnetv2_s(**kwargs):
+    """
+    Constructs a EfficientNetV2-S model
+    """
+    cfgs = [
+        # t, c, n, s, SE
+        [1,  24,  2, 1, 0],
+        [4,  48,  4, 2, 0],
+        [4,  64,  4, 2, 0],
+        [4, 128,  6, 2, 1],
+        [6, 160,  9, 1, 1],
+        [6, 256, 15, 2, 1],
+    ]
+    return EffNetV2(cfgs, **kwargs)
 
 
-# =============================================================================
-#       Final FC Layer
-# =============================================================================
-        
-        z = self.final_fc2(z)
-        z = self.sigmoid(z)
+def effnetv2_m(**kwargs):
+    """
+    Constructs a EfficientNetV2-M model
+    """
+    cfgs = [
+        # t, c, n, s, SE
+        [1,  24,  3, 1, 0],
+        [4,  48,  5, 2, 0],
+        [4,  80,  5, 2, 0],
+        [4, 160,  7, 2, 1],
+        [6, 176, 14, 1, 1],
+        [6, 304, 18, 2, 1],
+        [6, 512,  5, 1, 1],
+    ]
+    return EffNetV2(cfgs, **kwargs)
 
-        return z
-        
 
-#%%
+def effnetv2_l(**kwargs):
+    """
+    Constructs a EfficientNetV2-L model
+    """
+    cfgs = [
+        # t, c, n, s, SE
+        [1,  32,  4, 1, 0],
+        [4,  64,  7, 2, 0],
+        [4,  96,  7, 2, 0],
+        [4, 192, 10, 2, 1],
+        [6, 224, 19, 1, 1],
+        [6, 384, 25, 2, 1],
+        [6, 640,  7, 1, 1],
+    ]
+    return EffNetV2(cfgs, **kwargs)
 
-# 'efficientnetv2_l'
-# 'efficientnetv2_m'
-# 'efficientnetv2_rw_m'
-# 'efficientnetv2_rw_s'
-# 'efficientnetv2_s'
 
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-#model = EffNetV2(num_classes=1).to(device)
-#summary(model, [(1,500,500), (1,1,1)])
-#print(model)
-
-#from pprint import pprint
-#model_names = timm.list_models('*resnext*')
-#pprint(model_names)
-
+def effnetv2_xl(**kwargs):
+    """
+    Constructs a EfficientNetV2-XL model
+    """
+    cfgs = [
+        # t, c, n, s, SE
+        [1,  32,  4, 1, 0],
+        [4,  64,  8, 2, 0],
+        [4,  96,  8, 2, 0],
+        [4, 192, 16, 2, 1],
+        [6, 256, 24, 1, 1],
+        [6, 512, 32, 2, 1],
+        [6, 640,  8, 1, 1],
+    ]
+    return EffNetV2(cfgs, **kwargs)

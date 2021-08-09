@@ -154,9 +154,9 @@ class SEResNeXt(nn.Module):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        print(x)
         x = self.resx_relu(x)
         x = x.view(x.size(0), -1)
+        print(x)
 
 # =============================================================================
 #       Gender Fully Connected Layer

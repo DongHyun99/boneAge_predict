@@ -9,6 +9,7 @@ import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
 from model.new_model import BottleneckX, SEResNeXt
+from model.EffiNet_v2 import effnetv2_s, EffNetV2
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -293,6 +294,7 @@ if __name__ == '__main__':
     # sample_batch =  next(iter(test_data_loader))
     # print(sample_batch)
     # Initialize the model
+    
     age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
 
     # Set loss as mean squared error (for continuous output)
