@@ -184,7 +184,6 @@ class SEResNeXt(nn.Module):
         
         z = self.final_fc2(z)
         z = self.sigmoid(z)
-
         return z
 
 

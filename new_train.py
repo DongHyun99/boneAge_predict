@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from model.EfficientNet_v2 import EffNetV2
+from model.EffiNet_v2 import SEResNeXt
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -27,7 +27,7 @@ random.seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # epoch 수 결정
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 # loss list (나중에 plot 하기 위해서)
@@ -44,7 +44,7 @@ val_dataset_path = 'bone_data/validation/'
 train_csv_path = 'bone_data/boneage-training-dataset.csv'
 val_test_csv_path = 'bone_data/Validation Dataset.csv'
 
-save_path = 'result/model/'
+save_path = 'D:/model/'
 
 # sample data를 통한 정규화
 k=100 # 100장의 임의의 데이터
@@ -238,7 +238,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     'val_loss': val_loss
                 }
         # 저장하는 states는 epoch, model state, optimizer state, loss, val_loss이다.
-        if (epoch+1) % 1 == 0: # 10 epoch마다 저장
+        if (epoch+1) % 1 == 0: # 1 epoch마다 저장
             save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.tar'.format(epoch+1, total_loss, val_loss))
 
         # loss list 저장
@@ -274,10 +274,10 @@ def display_loss():
     plt.show()
     plt.savefig('result/val_loss.png', dpi=200)
 
-    l=pd.DataFrame([loss_list], columns=['loss'])
-    vl=pd.DataFrame([val_loss_list], columns=['val_loss'])
-    bl=pd.DataFrame([batch_loss_list], columns=['batch_loss'])
-    bvl=pd.DataFrame([batch_val_loss_list], columns=['batch_val_loss'])
+    l=pd.Series([loss_list])
+    vl=pd.Series([val_loss_list])
+    bl=pd.Series([batch_loss_list])
+    bvl=pd.Series([batch_val_loss_list])
 
     l.to_csv('result/loss.csv', sep=',',na_rep='NaN')
     vl.to_csv('result/valloss.csv', sep=',',na_rep='NaN')
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     # print(sample_batch)
     # Initialize the model
 
-    age_predictor = EffNetV2(num_classes=1)
+    age_predictor = SEResNeXt(num_classes=1)
 
     # Set loss as mean squared error (for continuous output)
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler

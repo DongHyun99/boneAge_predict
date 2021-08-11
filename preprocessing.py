@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 
 #15555, 15588, 15507
 
-train_dataset_path = 'bone_data/train/1395.png'
+train_dataset_path = 'bone_data/train/15532.png'
 
 img = cv2.imread(train_dataset_path,cv2.IMREAD_GRAYSCALE)
 print(np.average(img.flatten()))
 
-'''
-img = cv2.subtract(img, np.average(img.flatten())-40)
+
+#img = cv2.subtract(img, np.average(img.flatten())-40)
 clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
 img = clahe.apply(img)
 print(np.average(img.flatten()))
-'''
+
 
 val = 500
 if img.shape[0]>img.shape[1]: # row>column

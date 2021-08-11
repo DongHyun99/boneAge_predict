@@ -9,14 +9,13 @@ from torchvision import transforms
 import glob
 import numpy as np
 from multiprocessing import freeze_support
-from model.new_model import SEResNeXt, BottleneckX
-from model.EfficientNet_v2 import EffNetV2
+from model.EffiNet_v2 import SEResNeXt
 from new_train import BonesDataset, Normalize, ToTensor
 
 train_dataset_path = 'bone_data/train/'
 test_dataset_path = 'bone_data/test/'
 val_dataset_path = 'bone_data/validation/'
-save_path = 'result/model/'
+save_path = 'D:/model/50epoch/'
 
 train_csv_path = 'bone_data/boneage-training-dataset.csv'
 val_test_csv_path = 'bone_data/Validation Dataset.csv'
@@ -91,13 +90,13 @@ if __name__ == '__main__':
     
     #age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
 
-    age_predictor = EffNetV2( num_classes=1)
+    age_predictor = SEResNeXt(num_classes=1)
     # age_predictor = nn.DataParallel(age_predictor)
     model = age_predictor.to(device)
     criterion = nn.MSELoss()
     optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
 
-    checkpoint = torch.load(save_path+'epoch-1-loss-0.0333-val_loss-0.0366.tar')
+    checkpoint = torch.load(save_path+'epoch-50-loss-0.0000-val_loss-0.0306.tar')
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
