@@ -45,7 +45,7 @@ dataset 각각의 image size는 다음과 같이 나온다. (재각각이다.)
 loss는 MSE loss를 사용했고 vlidation set데이터가 충분치 않아서 안정적이지 못하므로 개선해야 한다.  
 
 <img src="./result/result_image/efficientnetv2-2-loss.png" width="60%">
-<img src="./result/result_image/efficientnetv2-2-valloss.png" width="60%>  
+<img src="./result/result_image/efficientnetv2-2-valloss.png" width="60%">  
 
 
 ## Accuracy (MAE)  
