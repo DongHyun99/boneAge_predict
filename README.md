@@ -47,14 +47,15 @@ loss는 MSE loss를 사용했고 vlidation set데이터가 충분치 않아서 �
 <img src="./result/result_image/efficientnetv2-2-loss.png" width="60%">
 <img src="./result/result_image/efficientnetv2-2-valloss.png" width="60%>  
 
-      
-## Accuracy (MAE)
+
+## Accuracy (MAE)  
 
 >MAE: 27.023 -> 14.04613 -> 12.00912 (month)  
 
 개선중.. (4~6 MAE를 목표로)  
 
-## To-do's ```2021-08-12~```
+
+## To-do's ```2021-08-12~```  
 
 - [ ] EfficientNet v2: Adaptive Regularization with Progressive Learning
 - [ ] Gender, image data shuffle -> MixConv?
