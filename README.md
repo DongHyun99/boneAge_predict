@@ -2,14 +2,16 @@
 
 <img src="./result/result_image/Network Architecture.png">  
 
-입력층으로 X-Ray 사진 파일과 Gender를 받아서 뻐나이를 예측하는 딥러닝 모델  
+입력층으로 X-Ray 사진 파일(png)과 Gender(Boolean)를 받아서 뻐나이를 예측하는 딥러닝 모델  
 ## Depemdemcies
 
 * pytorch 1.9.0
 * pandas
+* numpy
 * glob
 * open-cv
 * matplotlib
+* timm
 
 ## DataSet  
 
@@ -21,22 +23,44 @@ validation set을 2개로 나누어 측정했다.
     # Val   -  800 images
     # Test  -  625 images 
 
-bone_data의 test, train, validation 폴더에 각각의 image 파일을 넣어줘야 한다.
+bone_data의 test, train, validation 폴더에 각각의 image 파일을 넣어줘야 한다.  
+
+dataset 각각의 image size는 다음과 같이 나온다. (재각각이다.)  
+
+> train dataset size distribution  
+
+<img src="./result/result_image/trainset-size-distribution.png" width="40%">  
+
+> validation dataset size distribution  
+
+<img src="./result/result_image/validationset-size-distribution.png" width="40%">  
+
+> test dataset size distribution  
+
+<img src="./result/result_image/testset-size-distribution.png" width="40%">  
+
+
+## loss  
+
+loss는 MSE loss를 사용했고 vlidation set데이터가 충분치 않아서 안정적이지 못하므로 개선해야 한다.  
+
+<img src="./result/result_image/efficientnetv2-2-loss.png" width="60%">
+<img src="./result/result_image/efficientnetv2-2-valloss.png" width="60%>  
+
       
-## Accuracy
+## Accuracy (MAE)
 
->MAE: 12~14.04613 (month)  
+>MAE: 27.023 -> 14.04613 -> 12.00912 (month)  
 
-개선중..
+개선중.. (4~6 MAE를 목표로)  
 
-## To-do's
+## To-do's ```2021-08-12~```
 
-- [ ] image Augmentation (denormalize..)  
-- [ ] 하얀데이터와 검은데이터의 픽셀 평균을 구해서 두 데이터를 구분해보고 따로 학습(test, validation, train의 데이터를 통일하고 다시 나누는 작업 필요),  
-test 할 때도 데이터의 픽셀 값에 따라 두 모델을 따로 사용해보기 (4~5개 정도로 나누고 Augmentation을 이용해서 데이터의 양을 늘릴것)  
-- [x] 손 사진 색감을 전체적으로 통일해보기 (현재 40으로 통일해서 학습 중)  
-- [x] Gender, image data shuffle -> 랜덤으로 넣으면 loss가 올라가므로 랜덤하지 않게 넣는 방법을 찾아볼 것  
-- [ ] change Activation Function (Layer의 output을 보고 
-    만약 음수 값이 나오지 않는 경우, ReLU를 사용할 필요가 X)
-- [ ] change backbone Network: SE ResNext ->efficientNet V2 (classification으로 되어있어서 regression으로 바꿔야 함)
-
+- [ ] EfficientNet v2: Adaptive Regularization with Progressive Learning
+- [ ] Gender, image data shuffle -> MixConv?
+- [ ] Change Activation Function: EfficientNet v2에서는 swish(SiLU)를 사용하므로 전체적으로 SiLU로 통일해 보기
+- [ ] Change Network Architecture 1: gender 맨 뒤에 넣기 or 앞에도 넣고 뒤에도 넣기
+- [ ] Change Network Architecture 2: image와 gender를 먼저 concatenation 한 뒤 efficientNet에 넣어보기
+- [ ] Change Network Architecture 2: Localization network 구현: 손을 식별하고 crop하여 비율이 뭉개지지 않도록
+- [ ] CAM 혹은 Grad-CAM을 사용해서 heatMap 확인해보기 (gender와 concatenate 되는 구조 때문에 잘 될지 모르겠음)
+- [ ] Age Nromalization 제거해보기 -> 어떤 영향을 끼치는지 살펴보기

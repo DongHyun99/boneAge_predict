@@ -8,8 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from model.new_model import BottleneckX, SEResNeXt
-from model.EffiNet_v2 import effnetv2_s, EffNetV2
+from SERestNext101 import BottleneckX, SEResNeXt
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler

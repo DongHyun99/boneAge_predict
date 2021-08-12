@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from model.EffiNet_v2 import SEResNeXt
+from model.BoneAgeNet import BoneAgeNet
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -77,8 +77,8 @@ train_df = bones_df.iloc[:12600,:]
 val_df = val_bones_df.iloc[:val_dataset_size,:]
 test_df = val_bones_df.iloc[val_dataset_size:,:]
 
-age_max = np.max(bones_df['boneage'])
-age_min = np.min(bones_df['boneage'])
+age_max = np.max(bones_df['boneage']) # 228 (19 year)
+age_min = np.min(bones_df['boneage']) # 1
 
 # ===============================================================================================================
 #%%
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     # print(sample_batch)
     # Initialize the model
 
-    age_predictor = SEResNeXt(num_classes=1)
+    age_predictor = BoneAgeNet(num_classes=1)
 
     # Set loss as mean squared error (for continuous output)
     # # Initialize Stochastic Gradient Descent optimizer and learning rate scheduler

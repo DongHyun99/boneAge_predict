@@ -9,25 +9,21 @@ from torchvision import transforms
 import glob
 import numpy as np
 from multiprocessing import freeze_support
-from model.EffiNet_v2 import SEResNeXt
+from model.BoneAgeNet import BoneAgeNet
 from new_train import BonesDataset, Normalize, ToTensor
 
-train_dataset_path = 'bone_data/train/'
 test_dataset_path = 'bone_data/test/'
 val_dataset_path = 'bone_data/validation/'
-save_path = 'D:/model/50epoch/'
+save_path = 'D:/model/'
 
-train_csv_path = 'bone_data/boneage-training-dataset.csv'
 val_test_csv_path = 'bone_data/Validation Dataset.csv'
 
-train_image_filenames = glob.glob(train_dataset_path+'*.png')
 val_image_filenames = glob.glob(val_dataset_path+'*.png')
 test_image_filenames = glob.glob(test_dataset_path+'*.png')
 
 val_dataset_size = len(val_image_filenames)
 test_dataset_size = len(test_image_filenames)
 
-bones_df = pd.read_csv(train_csv_path)
 val_bones_df=pd.read_csv(val_test_csv_path)
 val_bones_df = val_bones_df.reindex(columns=['id', 'boneage', 'male'])
 val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
@@ -35,8 +31,8 @@ val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
 val_df = val_bones_df.iloc[:val_dataset_size,:]
 test_df = val_bones_df.iloc[val_dataset_size:,:]
 
-age_max = np.max(bones_df['boneage']) # 228
-age_min = np.min(bones_df['boneage']) # 1
+age_max = 228
+age_min = 1
 
 #%%
 def denormalize(inputs, age_min, age_max):
@@ -82,21 +78,19 @@ if __name__ == '__main__':
     
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
-    data_transform = transforms.Compose([
-        Normalize(age_min,age_max),
-        ToTensor()])
+    data_transform = transforms.Compose([Normalize(age_min,age_max), ToTensor()])
+
     test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
-    
-    #age_predictor = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes =1)
 
-    age_predictor = SEResNeXt(num_classes=1)
-    # age_predictor = nn.DataParallel(age_predictor)
+    age_predictor = BoneAgeNet(num_classes=1)
+    # age_predictor = nn.DataParallel(age_predictor) # -> to multi-GPU
     model = age_predictor.to(device)
+    
     criterion = nn.MSELoss()
     optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
 
-    checkpoint = torch.load(save_path+'epoch-50-loss-0.0000-val_loss-0.0306.tar')
+    checkpoint = torch.load(save_path+'BEST_MODEL-epoch-50-val_loss-0.0143.tar')
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

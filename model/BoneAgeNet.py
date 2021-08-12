@@ -3,7 +3,6 @@
 import torch
 import torch.nn as nn
 import math
-import timm
 from timm.models.efficientnet import _gen_efficientnetv2_m
 
 
@@ -14,14 +13,14 @@ def efficientnetv2_m(pretrained=False, **kwargs):
     in_chans=1,drop_rate=0.2,drop_path_rate=0.2, **kwargs)
     return model
 
-class SEResNeXt(nn.Module):
+class BoneAgeNet(nn.Module):
 
     def __init__(self, num_classes=1000):
-        super(SEResNeXt, self).__init__()
+        super(BoneAgeNet, self).__init__()
 
-        # SE ResNext 101 Layer
-        self.seresnext = efficientnetv2_m()
-        self.resx_relu = nn.ReLU()
+        # EfficientNet-V2 Layer
+        self.efficientnet = efficientnetv2_m()
+        self.effi_relu = nn.ReLU()
 
         # Fully Connected Layer for  gender
         self.gen_fc_1 = nn.Linear(1,16)
@@ -51,11 +50,11 @@ class SEResNeXt(nn.Module):
     # Forward Pass. x = Image tensor, y = gender tensor
     def forward(self, x,y):
 # =============================================================================
-#       ResNet Layers        
+#       EfficientNet-v2 Layers        
 # =============================================================================
 
-        x = self.seresnext(x)
-        x = self.resx_relu(x)
+        x = self.efficientnet(x)
+        x = self.effi_relu(x)
         x = x.view(x.size(0), -1)
 
 
@@ -90,6 +89,9 @@ class SEResNeXt(nn.Module):
 
 
 #%%
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-#model = SEResNeXt(block = BottleneckX,layers = [3, 4, 23, 3],num_classes = 1).to(device)
-#print(model)
+# =============================================================================
+#       Model Print
+# =============================================================================
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+model = BoneAgeNet(num_classes = 1).to(device)
+print(model)
