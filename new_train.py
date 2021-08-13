@@ -106,7 +106,7 @@ class BonesDataset(Dataset):
         '''
 
         # color limited adptive historgram equalization
-        clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
         image = clahe.apply(image)
 
         image = image.astype(np.float64)
