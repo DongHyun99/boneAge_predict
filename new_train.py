@@ -59,11 +59,14 @@ bones_df.iloc[:,1:3] = bones_df.iloc[:,1:3].astype(np.float)
 
 train_df = bones_df.sample(n=10000, random_state = 1004)
 bones_df = bones_df.drop(train_df.index)
+train_df.index = [i for i in range(0,10000,1)]
 
 val_df = bones_df.sample(n=1000, random_state = 1004)
 bones_df = bones_df.drop(val_df.index)
+val_df.index = [i for i in range(0,1000,1)]
 
 test_df = bones_df[:]
+test_df.index = [i for i in range(0,1611,1)]
 
 age_max = np.max(bones_df['boneage']) # 228 (19 year)
 age_min = np.min(bones_df['boneage']) # 1
