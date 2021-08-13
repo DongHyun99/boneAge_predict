@@ -3,7 +3,7 @@
 <img src="./result/result_image/Network Architecture.png">  
 
 입력층으로 X-Ray 사진 파일(png)과 Gender(Boolean)를 받아서 뻐나이를 예측하는 딥러닝 모델  
-## Depemdemcies
+## Dependencies
 
 * pytorch 1.9.0
 * pandas
@@ -62,6 +62,7 @@ loss는 MSE loss를 사용했고 vlidation set데이터가 충분치 않아서 �
 - [ ] Change Activation Function: EfficientNet v2에서는 swish(SiLU)를 사용하므로 전체적으로 SiLU로 통일해 보기
 - [ ] Change Network Architecture 1: gender 맨 뒤에 넣기 or 앞에도 넣고 뒤에도 넣기
 - [ ] Change Network Architecture 2: image와 gender를 먼저 concatenation 한 뒤 efficientNet에 넣어보기
-- [ ] Change Network Architecture 2: Localization network 구현: 손을 식별하고 crop하여 비율이 뭉개지지 않도록
+- [ ] Change Network Architecture 3: Localization network 구현: 손을 식별하고 crop하여 비율이 뭉개지지 않도록
 - [ ] CAM 혹은 Grad-CAM을 사용해서 heatMap 확인해보기 (gender와 concatenate 되는 구조 때문에 잘 될지 모르겠음)
-- [ ] Age Nromalization 제거해보기 -> 어떤 영향을 끼치는지 살펴보기
+- [ ] Age Normalization 제거해보기 -> 어떤 영향을 끼치는지 살펴보기
+- [ ] 현재 사용중인 test / validation dataset과 train dataset에 차이가 있음 -> trainset으로 3가지를 구성해 볼 것

@@ -27,7 +27,7 @@ random.seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # epoch 수 결정
-NUM_EPOCHS = 50
+NUM_EPOCHS = 30
 
 
 # loss list (나중에 plot 하기 위해서)
@@ -36,46 +36,34 @@ val_loss_list = []
 batch_loss_list = []
 batch_val_loss_list = []
 
-train_dataset_path = 'bone_data/train/'
-test_dataset_path = 'bone_data/test/'
-val_dataset_path = 'bone_data/validation/'
+dataset_path = 'bone_data/train/'
+save_path = 'D:/model/'
 
 # Image and CSV file paths
 train_csv_path = 'bone_data/boneage-training-dataset.csv'
-val_test_csv_path = 'bone_data/Validation Dataset.csv'
-
-save_path = 'D:/model/'
 
 # sample data를 통한 정규화
-k=100 # 100장의 임의의 데이터
 size=500 # image scale: 500 x 500
-train_image_filenames = glob.glob(train_dataset_path+'*.png')
-val_image_filenames = glob.glob(val_dataset_path+'*.png')
-test_image_filenames = glob.glob(test_dataset_path+'*.png')
 
 # img_mean = 46.48850549076203
 # img_std = 42.557445370314426
 
 # Split Train Validation Test
-# Train - 12611 images
-# Val   -  800 images
-# Test  -  625 images
-
-train_dataset_size = len(train_image_filenames)
-val_dataset_size = len(val_image_filenames)
-test_dataset_size = len(test_image_filenames)
+# Train - 10000 images
+# Val   -  1000 images
+# Test  -  1611 images
 
 bones_df = pd.read_csv(train_csv_path)
-val_bones_df=pd.read_csv(val_test_csv_path)
 bones_df.iloc[:,1:3] = bones_df.iloc[:,1:3].astype(np.float)
-val_bones_df = val_bones_df.reindex(columns=['id', 'boneage', 'male'])
-# validation set의 csv column의 순서가 train set과 다르기 때문에 통일해 줌
-val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
 # columns는 [id, boneage, male]로 이루어져있음, float으로 바꿔면서 male은 (1.0, 0.0)으로 바뀌게 됨
 
-train_df = bones_df.iloc[:12600,:]
-val_df = val_bones_df.iloc[:val_dataset_size,:]
-test_df = val_bones_df.iloc[val_dataset_size:,:]
+train_df = bones_df.sample(n=10000, random_state = 1004)
+bones_df = bones_df.drop(train_df.index)
+
+val_df = bones_df.sample(n=1000, random_state = 1004)
+bones_df = bones_df.drop(val_df.index)
+
+test_df = bones_df[:]
 
 age_max = np.max(bones_df['boneage']) # 228 (19 year)
 age_min = np.min(bones_df['boneage']) # 1
@@ -100,7 +88,9 @@ class BonesDataset(Dataset):
 
         img_name = self.image_dir + str(self.dataframe.iloc[idx,0]) + '.png' # 이미지 이름
         image = cv2.imread(img_name,0)
+        
         '''
+        # center crop & resize
         val = 500
         if image.shape[0]>image.shape[1]: # row>column
             val = 500/image.shape[1]
@@ -111,9 +101,10 @@ class BonesDataset(Dataset):
         c = int(image.shape[1]/2)
         image = image[r-250 : r+250, c-250 : c+250]
         '''
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+
+        # color limited adptive historgram equalization
+        clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
         image = clahe.apply(image)
-        # image = cv2.medianBlur(image,3)
 
         image = image.astype(np.float64)
         gender = np.atleast_1d(self.dataframe.iloc[idx,2]) # 입력값(성별)을 1차원 이상의 배열로 변환
@@ -199,11 +190,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 optimizer.step() # optim step
 
             running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/3150, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/2500, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_loss_list.append(loss.item())
 
-        total_loss = running_loss / 3150 # epoch 평균 loss, 12600/4 = 3150, 21600/8 = 1575
+        total_loss = running_loss / 2500 # epoch 평균 loss, 10000/4 = 2500, 10000/8 = 1250
 
         print('=================validation evaluate=================')
 
@@ -222,11 +213,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 loss = criterion(outputs, age)
 
             val_running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/200, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/250, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_val_loss_list.append(loss.item())
 
-        val_loss = val_running_loss / 200 # epoch 평균 validation loss, 800/4 = 200, 800/8 = 100
+        val_loss = val_running_loss / 250 # epoch 평균 validation loss, 1000/4 = 250, 1000/8 = 125
         scheduler.step() # lr step
         print('\ntime: {}\nloss: {}, val_loss: {}\n==============================================='.format(datetime.datetime.now(),total_loss, val_loss))
 
@@ -248,15 +239,16 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         if best_val_loss is None or val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model = states
+
     save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(states['epoch']+1,val_loss))
     return model
 
 
 #%%
 # loss visualization
-def display_loss():
+def display_loss(num):
     plt.figure()
-    plt.plot([x for x in range(NUM_EPOCHS)], loss_list, label='loss')
+    plt.plot([x for x in range(num)], loss_list, label='loss')
     
     plt.xlabel('epoch')
     plt.ylabel('loss')
@@ -265,7 +257,7 @@ def display_loss():
     plt.show()
     plt.savefig('result/loss.png', dpi=200)
 
-    plt.plot([x for x in range(NUM_EPOCHS)], val_loss_list, label='validation_loss')
+    plt.plot([x for x in range(num)], val_loss_list, label='validation_loss')
 
     plt.xlabel('epoch')
     plt.ylabel('loss')
@@ -291,9 +283,9 @@ if __name__ == '__main__':
     freeze_support()
 
     data_transform = transforms.Compose([Normalize(age_min,age_max),ToTensor()])
-    train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,transform = data_transform)
-    val_dataset = BonesDataset(dataframe = val_df,image_dir = val_dataset_path,transform = data_transform)
-    test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
+    train_dataset = BonesDataset(dataframe = train_df,image_dir=dataset_path,transform = data_transform)
+    val_dataset = BonesDataset(dataframe = val_df,image_dir = dataset_path,transform = data_transform)
+    test_dataset = BonesDataset(dataframe = test_df,image_dir=dataset_path,transform = data_transform)
 
     # Sanity Check
     # print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
@@ -327,7 +319,7 @@ if __name__ == '__main__':
     
 
     # show loss graph
-    display_loss()
+    display_loss(NUM_EPOCHS)
 
 
     #sample_batch = next(iter(val_data_loader))

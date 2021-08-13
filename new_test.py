@@ -6,30 +6,36 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
 from torchvision import transforms
-import glob
 import numpy as np
 from multiprocessing import freeze_support
 from model.BoneAgeNet import BoneAgeNet
 from new_train import BonesDataset, Normalize, ToTensor
+import random
 
-test_dataset_path = 'bone_data/test/'
-val_dataset_path = 'bone_data/validation/'
+# For reproducibility use the seeds below (임의 값 고정)
+torch.manual_seed(1498920)
+torch.cuda.manual_seed(1498920)
+np.random.seed(1498920)
+random.seed(1498920)
+torch.backends.cudnn.deterministic=True
+
+dataset_path = 'bone_data/train/'
 save_path = 'D:/model/'
 
-val_test_csv_path = 'bone_data/Validation Dataset.csv'
+# Image and CSV file paths
+train_csv_path = 'bone_data/boneage-training-dataset.csv'
 
-val_image_filenames = glob.glob(val_dataset_path+'*.png')
-test_image_filenames = glob.glob(test_dataset_path+'*.png')
+bones_df = pd.read_csv(train_csv_path)
+bones_df.iloc[:,1:3] = bones_df.iloc[:,1:3].astype(np.float)
+# columns는 [id, boneage, male]로 이루어져있음, float으로 바꿔면서 male은 (1.0, 0.0)으로 바뀌게 됨
 
-val_dataset_size = len(val_image_filenames)
-test_dataset_size = len(test_image_filenames)
+train_df = bones_df.sample(n=10000, random_state = 1004)
+bones_df = bones_df.drop(train_df.index)
 
-val_bones_df=pd.read_csv(val_test_csv_path)
-val_bones_df = val_bones_df.reindex(columns=['id', 'boneage', 'male'])
-val_bones_df.iloc[:,1:3] = val_bones_df.iloc[:,1:3].astype(np.float)
+val_df = bones_df.sample(n=1000, random_state = 1004)
+bones_df = bones_df.drop(val_df.index)
 
-val_df = val_bones_df.iloc[:val_dataset_size,:]
-test_df = val_bones_df.iloc[val_dataset_size:,:]
+test_df = bones_df[:]
 
 age_max = 228
 age_min = 1
@@ -63,15 +69,12 @@ def eval_model(model, test_data, criterion, optimizer):
             preds = denormalize(preds, age_min, age_max)
             result_array = np.concatenate((result_array,preds))
 
-            test_loss += loss.item() * image.size(0)
-            if (batch_no + 1) % 25 == 0: print('Batch {}/624'.format((batch_no+1)*4)) # 100장마다 얼마나 남았는지 출력
+            test_loss += loss.item()
+            if (batch_no + 1) % 25 == 0: print('Batch {}/1611, batch loss: {}'.format((batch_no+1)*4, loss.item())) # 100장마다 얼마나 남았는지 출력
 
-        print('test loss: ', test_loss/test_dataset_size)
+        print('test loss: ', test_loss/1611*4)
         return result_array
 #%%
-
-img_mean = 46.48850549076203
-img_std = 42.557445370314426
 
 if __name__ == '__main__':
     freeze_support()
@@ -80,7 +83,7 @@ if __name__ == '__main__':
     
     data_transform = transforms.Compose([Normalize(age_min,age_max), ToTensor()])
 
-    test_dataset = BonesDataset(dataframe = test_df,image_dir=test_dataset_path,transform = data_transform)
+    test_dataset = BonesDataset(dataframe = test_df,image_dir=dataset_path,transform = data_transform)
     test_data_loader = DataLoader(test_dataset,batch_size=4,shuffle=False,num_workers = 4)
 
     age_predictor = BoneAgeNet(num_classes=1)
@@ -90,7 +93,7 @@ if __name__ == '__main__':
     criterion = nn.MSELoss()
     optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
 
-    checkpoint = torch.load(save_path+'BEST_MODEL-epoch-50-val_loss-0.0143.tar')
+    checkpoint = torch.load(save_path+'epoch-15-loss-0.0131-val_loss-0.0116.tar')
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -103,4 +106,4 @@ if __name__ == '__main__':
     predict_df['output'] = np.round(predict_df['output'], decimals=2) # 2에서 반올림
     predict_df = predict_df.reset_index() # 인덱스 초기화 (재배열)
 
-    predict_df.to_csv('result/predict.csv', sep=',',na_rep='NaN')
+    predict_df.to_csv('predict.csv', sep=',',na_rep='NaN')

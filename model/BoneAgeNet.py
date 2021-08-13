@@ -92,6 +92,7 @@ class BoneAgeNet(nn.Module):
 # =============================================================================
 #       Model Print
 # =============================================================================
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-model = BoneAgeNet(num_classes = 1).to(device)
-print(model)
+
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+#model = BoneAgeNet(num_classes = 1).to(device)
+#print(model)
