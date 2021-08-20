@@ -65,4 +65,4 @@ loss는 MSE loss를 사용했고 vlidation set데이터가 충분치 않아서 �
 - [ ] Change Network Architecture 3: Localization network 구현: 손을 식별하고 crop하여 비율이 뭉개지지 않도록
 - [ ] CAM 혹은 Grad-CAM을 사용해서 heatMap 확인해보기 (gender와 concatenate 되는 구조 때문에 잘 될지 모르겠음)
 - [ ] Age Normalization 제거해보기 -> 어떤 영향을 끼치는지 살펴보기
-- [ ] 현재 사용중인 test / validation dataset과 train dataset에 차이가 있음 -> trainset으로 3가지를 구성해 볼 것
+- [ ] 현재 사용중인 test / validation dataset과 train dataset에 차이가 있음 -> 16bit winner와 같은 구성으로 train 후 validation을 
