@@ -63,7 +63,7 @@ train_df.index = [i for i in range(0,10000,1)]
 
 val_df = bones_df.sample(n=1000, random_state = 1004)
 bones_df = bones_df.drop(val_df.index)
-val_df.index = [i for i in range(0,1000,1)]
+
 
 test_df = bones_df[:]
 test_df.index = [i for i in range(0,1611,1)]
@@ -322,7 +322,7 @@ if __name__ == '__main__':
     
 
     # show loss graph
-    display_loss(NUM_EPOCHS)
+    display_loss(len(loss_list))
 
 
     #sample_batch = next(iter(val_data_loader))
