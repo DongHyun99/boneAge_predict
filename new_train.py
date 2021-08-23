@@ -15,10 +15,6 @@ from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
 import datetime
 import random
-from sklearn.model_selection import train_test_split
-
-# cuda 작동 확인
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # For reproducibility use the seeds below (임의 값 고정)
 torch.manual_seed(1498920)
@@ -27,10 +23,14 @@ np.random.seed(1498920)
 random.seed(1498920)
 torch.backends.cudnn.deterministic=True
 
+# cuda 작동 확인
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 # epoch 수 결정
 NUM_EPOCHS = 100
-es = EarlyStopping()
 
+save_path = 'D:/model/'
+es = EarlyStopping()
 
 # loss list (나중에 plot 하기 위해서)
 loss_list = []
@@ -39,11 +39,12 @@ batch_loss_list = []
 batch_val_loss_list = []
 
 train_dataset_path = 'bone_data/train/'
+validation_image_path = 'bone_data/validation/'
 
 # Image and CSV file paths
-train_csv_path = 'bone_data/boneage-training-dataset.csv'
-
-save_path = 'D:/model/'
+train_csv_path = 'bone_data/training_dataset.csv'
+val_csv_path = 'bone_data/training_dataset.csv'
+test_csv_path = 'bone_data/training_dataset.csv'
 
 size=500 # image scale: 500 x 500
 
@@ -52,17 +53,22 @@ size=500 # image scale: 500 x 500
 
 # Split Train Validation Test
 # Train - 12611 images
-# Val   -  800 images
-# Test  -  625 images
+# Val   -  1425 images
+# Test  -   200 images
 
-bones_df = pd.read_csv(train_csv_path)
-bones_df.iloc[:,1:3] = bones_df.iloc[:,1:3].astype(np.float)
-# columns는 [id, boneage, male]로 이루어져있음, float으로 바꿔면서 male은 (1.0, 0.0)으로 바뀌게 됨
-train_df, val_df = train_test_split(bones_df, test_size=0.2,random_state=2018)
+# read dataset
+train_df = pd.read_csv(train_csv_path)
+train_df.iloc[:,1:3] = train_df.iloc[:,1:3].astype(np.float)
 
+val_df = pd.read_csv(val_csv_path)
+val_df = val_df.reindex(columns=['id', 'boneage', 'male'])
+val_df.iloc[:,1:3] = val_df.iloc[:,1:3].astype(np.float)
 
-age_max = np.max(bones_df['boneage']) # 228 (19 year)
-age_min = np.min(bones_df['boneage']) # 1
+test_df = pd.read_csv(test_csv_path)
+test_df.iloc[:,1:3] = test_df.iloc[:,1:3].astype(np.float)
+
+age_max = np.max(train_df['boneage']) # 228 (19 year)
+age_min = np.min(train_df['boneage']) # 1
 
 # ===============================================================================================================
 #%%
@@ -85,20 +91,9 @@ class BonesDataset(Dataset):
         img_name = self.image_dir + str(self.dataframe.iloc[idx,0]) + '.png' # 이미지 이름
         image = cv2.imread(img_name,0)
 
-        image = cv2.subtract(image, np.average(image.flatten())-40)
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
         image = clahe.apply(image)
-
-
-        val = 500
-        if image.shape[0]>image.shape[1]: # row>column
-            val = 500/image.shape[1]
-        else: val = 500/image.shape[0]
-        image = cv2.resize(image, dsize=(0,0), fx= val, fy = val)
-
-        r = int(image.shape[0]/2)
-        c = int(image.shape[1]/2)
-        image = image[r-250 : r+250, c-250 : c+250]
+        image = cv2.resize(image, (500,500))
 
         image = image.astype(np.float64)
         gender = np.atleast_1d(self.dataframe.iloc[idx,2]) # 입력값(성별)을 1차원 이상의 배열로 변환
@@ -184,11 +179,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 optimizer.step() # optim step
 
             running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/2522, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {}: {}/12611, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_loss_list.append(loss.item())
 
-        total_loss = running_loss / 2522 # epoch 평균 loss
+        total_loss = running_loss / 3152.75 # epoch 평균 loss
 
         print('=================validation evaluate=================')
 
@@ -207,14 +202,12 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 loss = criterion(outputs, age)
 
             val_running_loss += loss.item()
-            if (batch_no + 1) % 25 == 0: print('Epoch {} Batch {}/631, batch loss: {}'.format(epoch+1,(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
+            if (batch_no + 1) % 25 == 0: print('Epoch {}: {}/1425, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item())) # 100장마다 얼마나 남았는지 출력
 
             batch_val_loss_list.append(loss.item())
 
-        val_loss = val_running_loss / 631 # epoch 평균 validation loss
+        val_loss = val_running_loss / 356.25 # epoch 평균 validation loss
         scheduler.step() # lr step
-        if es.step(val_loss):
-            break
         print('\ntime: {}\nloss: {}, val_loss: {}\n==============================================='.format(datetime.datetime.now(),total_loss, val_loss))
 
         states = {
@@ -235,15 +228,19 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         if best_val_loss is None or val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model = states
+
+        if es.step(val_loss):
+            break
+
     save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(states['epoch']+1,val_loss))
     return model
 
 
 #%%
 # loss visualization
-def display_loss():
+def display_loss(num):
     plt.figure()
-    plt.plot([x for x in range(NUM_EPOCHS)], loss_list, label='loss')
+    plt.plot([x for x in range(num)], loss_list, label='loss')
     
     plt.xlabel('epoch')
     plt.ylabel('loss')
@@ -252,7 +249,7 @@ def display_loss():
     plt.show()
     plt.savefig('result/loss.png', dpi=200)
 
-    plt.plot([x for x in range(NUM_EPOCHS)], val_loss_list, label='validation_loss')
+    plt.plot([x for x in range(num)], val_loss_list, label='validation_loss')
 
     plt.xlabel('epoch')
     plt.ylabel('loss')
@@ -284,8 +281,8 @@ if __name__ == '__main__':
     # Sanity Check
     # print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
 
-    train_data_loader = DataLoader(train_dataset,batch_size=4,shuffle=False,num_workers = 4)
-    val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=False,num_workers = 4)
+    train_data_loader = DataLoader(train_dataset,batch_size=4,shuffle=True,num_workers = 4)
+    val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=True,num_workers = 4)
 
     # Sanity Check 2
     # sample_batch =  next(iter(test_data_loader))

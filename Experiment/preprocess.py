@@ -1,11 +1,20 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import skimage.io as io
+from skimage.transform import resize
 
 #15555, 15588, 15507
 
-train_dataset_path = 'bone_data/train/2193.png'
+train_dataset_path = 'bone_data/train/6193.png'
+img = io.imread(train_dataset_path)
 
+
+img_resize = resize(img, (500,500))
+plt.imshow(img_resize)
+plt.show()
+
+'''
 img = cv2.imread(train_dataset_path,cv2.IMREAD_GRAYSCALE)
 
 img = cv2.subtract(img, np.average(img.flatten())-40)
@@ -27,3 +36,4 @@ img = img[r-250 : r+250, c-250 : c+250]
 
 cv2.imshow(train_dataset_path, img)
 cv2.waitKey(0)
+'''

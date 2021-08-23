@@ -6,10 +6,9 @@ import math
 from timm.models.efficientnet import _gen_efficientnetv2_m
 
 
-
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
-    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=False, num_classes=400, 
+    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=pretrained, num_classes=50000, 
     in_chans=1,drop_rate=0.2,drop_path_rate=0.2, **kwargs)
     return model
 
@@ -20,18 +19,22 @@ class BoneAgeNet(nn.Module):
 
         # EfficientNet-V2 Layer
         self.efficientnet = efficientnetv2_m()
-        self.effi_relu = nn.ReLU()
+        self.effi_silu = nn.SiLU(inplace=True)
 
         # Fully Connected Layer for  gender
         self.gen_fc_1 = nn.Linear(1,16)
-        self.gen_relu  = nn.ReLU()
+        self.gen_silu  = nn.SiLU(inplace=True)
 
-        # Feature Fully Connected Layer
-        self.cat_fc = nn.Linear(16+400,200)
-        self.cat_relu = nn.ReLU()
+        # Feature Fully Connected Layer1
+        self.cat_fc1 = nn.Linear(16+50000,1000)
+        self.cat_silu1 = nn.SiLU(inplace=True)
+
+        # Feature Fully Connected Layer2
+        self.cat_fc2 = nn.Linear(1000,1000)
+        self.cat_silu2 = nn.SiLU(inplace=True)
         
         # Final Fully Connected Layer
-        self.final_fc2 = nn.Linear(200, num_classes)
+        self.final_fc2 = nn.Linear(1000, num_classes)
         self.sigmoid = nn.Sigmoid()
 
         # 초기화  (Weight Initialization)
@@ -54,7 +57,7 @@ class BoneAgeNet(nn.Module):
 # =============================================================================
 
         x = self.efficientnet(x)
-        x = self.effi_relu(x)
+        x = self.effi_silu(x)
         x = x.view(x.size(0), -1)
 
 
@@ -62,12 +65,12 @@ class BoneAgeNet(nn.Module):
 #       Gender Fully Connected Layer
 # =============================================================================
         y = self.gen_fc_1(y)
-        y = self.gen_relu(y)
+        y = self.gen_silu(y)
         y = y.view(y.size(0), -1)
 
         
 # =============================================================================
-#       Feature Concatenation & shuffle Layer
+#       Feature Concatenation Layer
 # =============================================================================
       
         z = torch.cat((x,y),dim = 1)
@@ -75,8 +78,11 @@ class BoneAgeNet(nn.Module):
         #idx = torch.randperm(z.shape[0])
         #z = z[idx].view(z.size())
         
-        z = self.cat_fc(z)
-        z = self.cat_relu(z)
+        z = self.cat_fc1(z)
+        z = self.cat_silu1(z)
+
+        z = self.cat_fc2(z)
+        z = self.cat_silu2(z)
 
 # =============================================================================
 #       Final FC Layer

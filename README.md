@@ -55,14 +55,14 @@ loss는 MSE loss를 사용했고 vlidation set데이터가 충분치 않아서 �
 개선중.. (4~6 MAE를 목표로)  
 
 
-## To-do's ```2021-08-12~```  
+## To-do's ```2021-08-23~```  
 
 - [ ] EfficientNet v2: Adaptive Regularization with Progressive Learning
-- [ ] Gender, image data shuffle -> MixConv?
-- [ ] Change Activation Function: EfficientNet v2에서는 swish(SiLU)를 사용하므로 전체적으로 SiLU로 통일해 보기
-- [ ] Change Network Architecture 1: gender 맨 뒤에 넣기 or 앞에도 넣고 뒤에도 넣기
-- [ ] Change Network Architecture 2: image와 gender를 먼저 concatenation 한 뒤 efficientNet에 넣어보기
-- [ ] Change Network Architecture 3: Localization network 구현: 손을 식별하고 crop하여 비율이 뭉개지지 않도록
 - [ ] CAM 혹은 Grad-CAM을 사용해서 heatMap 확인해보기 (gender와 concatenate 되는 구조 때문에 잘 될지 모르겠음)
-- [ ] Age Normalization 제거해보기 -> 어떤 영향을 끼치는지 살펴보기
-- [ ] 현재 사용중인 test / validation dataset과 train dataset에 차이가 있음 -> 16bit winner와 같은 구성으로 train 후 validation을 
+- [x] Change Activation Function: EfficientNet v2에서는 swish(SiLU)를 사용하므로 전체적으로 SiLU로 통일해 보기(학습 중)  
+- [x] Age Normalization 제거해보기 -> 어떤 영향을 끼치는지 살펴보기 (있는게 좋음)
+- [x] 현재 사용중인 train/val/test 데이터셋 변경
+- [ ] Change Network Architecture 1: gender 맨 뒤에 넣기 or 앞에도 넣고 뒤에도 넣기 - 보류  
+- [ ] Change Network Architecture 2: image와 gender를 먼저 concatenation 한 뒤 efficientNet에 넣어보기 - 보류  
+- [ ] Change Network Architecture 3: Localization network 구현: 손을 식별하고 crop하여 비율이 뭉개지지 않도록 - 보류  
+- [ ] Gender, image data shuffle -> MixConv? - 보류  
