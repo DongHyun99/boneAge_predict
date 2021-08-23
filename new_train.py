@@ -39,12 +39,12 @@ batch_loss_list = []
 batch_val_loss_list = []
 
 train_dataset_path = 'bone_data/train/'
-validation_image_path = 'bone_data/validation/'
+validation_dataset_path = 'bone_data/validation/'
 
 # Image and CSV file paths
 train_csv_path = 'bone_data/training_dataset.csv'
-val_csv_path = 'bone_data/training_dataset.csv'
-test_csv_path = 'bone_data/training_dataset.csv'
+val_csv_path = 'bone_data/validation_dataset.csv'
+test_csv_path = 'bone_data/test_dataset.csv'
 
 size=500 # image scale: 500 x 500
 
@@ -276,7 +276,7 @@ if __name__ == '__main__':
 
     data_transform = transforms.Compose([Normalize(age_min,age_max),ToTensor()])
     train_dataset = BonesDataset(dataframe = train_df,image_dir=train_dataset_path,transform = data_transform)
-    val_dataset = BonesDataset(dataframe = val_df,image_dir = train_dataset_path,transform = data_transform)
+    val_dataset = BonesDataset(dataframe = val_df,image_dir = validation_dataset_path,transform = data_transform)
 
     # Sanity Check
     # print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
@@ -309,10 +309,7 @@ if __name__ == '__main__':
     
 
     # show loss graph
-
     display_loss(len(loss_list))
-
-
 
     #sample_batch = next(iter(val_data_loader))
     #image = sample_batch['image'][2]

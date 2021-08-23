@@ -14,7 +14,7 @@ from new_train import BonesDataset, Normalize, ToTensor
 
 test_dataset_path = 'bone_data/test/'
 save_path = 'D:/model/'
-test_csv_path = 'bone_data/test.csv'
+test_csv_path = 'bone_data/test_dataset.csv'
 
 
 test_image_filenames = glob.glob(test_dataset_path+'*.png')

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import math
 from timm.models.efficientnet import _gen_efficientnetv2_m
-
+from torchsummary import summary
 
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
@@ -102,3 +102,4 @@ class BoneAgeNet(nn.Module):
 #device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
 #model = BoneAgeNet(num_classes = 1).to(device)
 #print(model)
+
