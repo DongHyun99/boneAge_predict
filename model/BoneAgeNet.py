@@ -7,7 +7,7 @@ from timm.models.efficientnet import _gen_efficientnetv2_m
 
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
-    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=pretrained, num_classes=50000, 
+    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=pretrained, 
     in_chans=1,drop_rate=0.2,drop_path_rate=0.2, **kwargs)
     return model
 
@@ -33,8 +33,7 @@ class BoneAgeNet(nn.Module):
         self.cat_silu2 = nn.SiLU(inplace=True)
         
         # Final Fully Connected Layer
-        self.final_fc2 = nn.Linear(1000, num_classes)
-        self.sigmoid = nn.Sigmoid()
+        self.final_fc = nn.Linear(1000, num_classes)
 
         # 초기화  (Weight Initialization)
         for m in self.modules(): # 모듈을 차례대로 불러옴
@@ -87,19 +86,17 @@ class BoneAgeNet(nn.Module):
 #       Final FC Layer
 # =============================================================================
         
-        z = self.final_fc2(z)
-        z = self.sigmoid(z)
+        z = self.final_fc(z)
         return z
 
 
-'''
+
 #%%
 # =============================================================================
 #       Model Print
 # =============================================================================
 from torchsummary import summary
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-model = BoneAgeNet(num_classes = 1).to(device)
-summary(model,[(1,500,500), (1,1,1)])
-'''
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+#model = BoneAgeNet(num_classes = 1).to(device)
+#summary(model,[(1,500,500), (1,1,1)])

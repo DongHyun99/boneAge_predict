@@ -93,7 +93,6 @@ class BonesDataset(Dataset):
 
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
         image = clahe.apply(image)
-        image = cv2.resize(image, (500,500))
 
         image = image.astype(np.float64)
         gender = np.atleast_1d(self.dataframe.iloc[idx,2]) # 입력값(성별)을 1차원 이상의 배열로 변환
@@ -113,7 +112,7 @@ class ToTensor(object):
     def __call__(self, sample): # __init__으로 초기화된 인스턴스를 함수로 취급할 때 불러오게 하는 함수
         image, gender, bone_age = sample['image'], sample['gender'], sample['bone_age']
         
-        #image = cv2.resize(image,(size, size)) #500 x 500으로 resize
+        image = cv2.resize(image,(size, size)) #500 x 500으로 resize
         image = np.expand_dims(image, axis=0) # 행 차원을 하나 추가한다.
 
         return {'image': torch.from_numpy(image).float(),
