@@ -183,7 +183,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
             batch_loss_list.append(loss.item())
 
-        total_loss = running_loss / 3152.75 # epoch 평균 loss
+        total_loss = running_loss / 3153 # epoch 평균 loss
 
         print('=================validation evaluate=================')
 
@@ -206,7 +206,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
             batch_val_loss_list.append(loss.item())
 
-        val_loss = val_running_loss / 356.25 # epoch 평균 validation loss
+        val_loss = val_running_loss / 357 # epoch 평균 validation loss
         scheduler.step() # lr step
         print('\ntime: {}\nloss: {}, val_loss: {}\n==============================================='.format(datetime.datetime.now(),total_loss, val_loss))
 
@@ -232,7 +232,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         if es.step(val_loss):
             break
 
-    save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(states['epoch']+1,val_loss))
+    save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(best_model['epoch']+1,best_val_loss))
     return model
 
 
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     # print(train_dataset[0]['image'].shape) # shape을 보면 [1, 500, 500]임을 알 수 있다.
 
     train_data_loader = DataLoader(train_dataset,batch_size=4,shuffle=True,num_workers = 4)
-    val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=True,num_workers = 4)
+    val_data_loader = DataLoader(val_dataset,batch_size=4,shuffle=False,num_workers = 4)
 
     # Sanity Check 2
     # sample_batch =  next(iter(test_data_loader))

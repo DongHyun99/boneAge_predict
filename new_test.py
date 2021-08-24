@@ -11,6 +11,7 @@ import numpy as np
 from multiprocessing import freeze_support
 from model.BoneAgeNet import BoneAgeNet
 from new_train import BonesDataset, Normalize, ToTensor
+import datetime
 
 test_dataset_path = 'bone_data/test/'
 save_path = 'D:/model/'
@@ -81,11 +82,12 @@ if __name__ == '__main__':
     criterion = nn.MSELoss()
     optimizer = optim.SGD(age_predictor.parameters(), lr=0.001, momentum=0.9)
 
-    checkpoint = torch.load(save_path+'epoch-7-loss-0.0289-val_loss-0.0241.tar')
+    checkpoint = torch.load(save_path+'epoch-30-loss-0.0154-val_loss-0.0136.tar')
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
+    print('================= test start =================\n', datetime.datetime.now())
     result_array = eval_model(model,test_data_loader ,criterion, optimizer)
     
     predict_df = test_df.copy()

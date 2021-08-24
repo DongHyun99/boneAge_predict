@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import math
 from timm.models.efficientnet import _gen_efficientnetv2_m
-from torchsummary import summary
 
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
@@ -19,14 +18,14 @@ class BoneAgeNet(nn.Module):
 
         # EfficientNet-V2 Layer
         self.efficientnet = efficientnetv2_m()
-        self.effi_silu = nn.SiLU(inplace=True)
+        self.efficientnet.classifier = nn.Identity()
 
         # Fully Connected Layer for  gender
         self.gen_fc_1 = nn.Linear(1,16)
         self.gen_silu  = nn.SiLU(inplace=True)
 
         # Feature Fully Connected Layer1
-        self.cat_fc1 = nn.Linear(16+50000,1000)
+        self.cat_fc1 = nn.Linear(16+1280,1000)
         self.cat_silu1 = nn.SiLU(inplace=True)
 
         # Feature Fully Connected Layer2
@@ -57,7 +56,7 @@ class BoneAgeNet(nn.Module):
 # =============================================================================
 
         x = self.efficientnet(x)
-        x = self.effi_silu(x)
+        #x = self.effi_silu(x)
         x = x.view(x.size(0), -1)
 
 
@@ -93,13 +92,14 @@ class BoneAgeNet(nn.Module):
         return z
 
 
-
+'''
 #%%
 # =============================================================================
 #       Model Print
 # =============================================================================
+from torchsummary import summary
 
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-#model = BoneAgeNet(num_classes = 1).to(device)
-#print(model)
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+model = BoneAgeNet(num_classes = 1).to(device)
+summary(model,[(1,500,500), (1,1,1)])
+'''
