@@ -114,7 +114,7 @@ def main():
         train_loss = train(model,train_data, epoch)
         val_loss = eval(model, val_data, epoch)
         scheduler.step(val_loss)
-        print('{}\n epoch:{}, loss:{}, val_loss:{}\n{}'.format(datetime.datetime.now(),epoch, train_loss, val_loss, line))
+        print('{}\nepoch:{}, loss:{}, val_loss:{}\n{}'.format(datetime.datetime.now(),epoch+1, train_loss, val_loss, line))
         
         states = {
             'epoch': epoch,
