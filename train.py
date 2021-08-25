@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+from torch.nn import parameter
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
@@ -12,14 +13,15 @@ from model.BoneageModel import BoneAgeNet
 from multiprocessing.spawn import freeze_support
 import datetime
 import matplotlib.pyplot as plt
+import math
 
-# For reproducibility use the seeds below
+# For reproducibility use the seeds below (임의 값 고정)
 torch.manual_seed(1498920)
 torch.cuda.manual_seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
-epochs = 2
+epochs = 100
 batch_size = 4
 es = EarlyStopping()
 
@@ -109,7 +111,7 @@ def eval(model, val_data, epoch):
     return epoch_val_loss / 357
 
 def main():
-    best_loss = 0.0
+    best_loss = math.inf
     best_model = None
     loss_list = []
     val_list = []
@@ -117,10 +119,9 @@ def main():
     line = '======================================================================='
     for epoch in range(epochs):
         train_loss = train(model,train_data, epoch)
-        print('{}\n==============================evaluation==============================\n'.format(datetime.datetime.now()))
         val_loss = eval(model, val_data, epoch)
         scheduler.step(val_loss)
-        print('{}\nepoch: {} loss: {} val_loss: {}\n{}'.format(datetime.datetime.now(),epoch+1, train_loss, val_loss, line))
+        print('{}\n epoch:{}, loss:{}, val_loss:{}\n{}'.format(datetime.datetime.now(),epoch, train_loss, val_loss, line))
         
         states = {
             'epoch': epoch,
@@ -136,7 +137,6 @@ def main():
         if (epoch+1) % 5 == 0: save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.pt'.format(epoch+1, train_loss, val_loss))
         if best_loss > val_loss:
             best_model = states
-            best_loss = val_loss
 
         if es.step(val_loss):
             break
