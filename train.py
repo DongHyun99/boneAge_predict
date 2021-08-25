@@ -20,15 +20,7 @@ torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
 epochs = 2
-batch_size = 4
 es = EarlyStopping()
-
-train_img_path = 'bone_data/train/'
-train_csv_path = 'bone_data/training_dataset.csv'
-validation_img_path = 'bone_data/validation/'
-validation_csv_path = 'bone_data/validation_dataset.csv'
-test_img_path = 'bone_data/test/'
-test_csv_path = 'bone_data/test_dataset.csv'
 save_path = 'D:/model/'
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
