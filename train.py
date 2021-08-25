@@ -21,7 +21,7 @@ torch.cuda.manual_seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
-epochs = 100
+epochs = 200
 batch_size = 4
 es = EarlyStopping()
 save_path = 'D:/model/'

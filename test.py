@@ -2,8 +2,6 @@
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.optim import lr_scheduler
 
 from earlyStopping import EarlyStopping
 from bone_data.DataLoad import test_data_loader, test_data
@@ -79,6 +77,9 @@ if __name__ == '__main__':
     result_array, test_loss = eval(model, test_data_loader)
     predict_df = test_data.copy()
     predict_df['output'] = result_array
-    predict_df['output'] = np.round(predict_df['output'])
+    predict_df['output'] = np.round(predict_df['output'], decimals=2)
+    predict_df['MAE'] = np.abs(predict_df['output']-predict_df['boneage'])
+
+    print('MAE={}'.format(predict_df['MAE'].mean()))
 
     predict_df.to_csv('predict.csv', sep=',', na_rep='NaN')
