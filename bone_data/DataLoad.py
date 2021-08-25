@@ -9,8 +9,7 @@ import torchvision.transforms as transforms
 import cv2
 from PIL import Image
 
-# Hyperparameters Setting 
-epochs = 100
+# Hyperparameters Setting
 batch_size = 4
 
 train_img_path = 'bone_data/train/'
@@ -78,9 +77,9 @@ trainset = BoneDataSet(train_img_path, train_data, composed)
 validationset = BoneDataSet(validation_img_path, val_data, composed)
 testset = BoneDataSet(test_img_path, test_data, composed)
 
-train_data_loader = DataLoader(trainset, batch_size=4, shuffle=True, num_workers=4)
-val_data_loader = DataLoader(validationset, batch_size=4, shuffle=False, num_workers=4)
-test_data_loader = DataLoader(testset, batch_size=4, shuffle=False, num_workers=4)
+train_data_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
+val_data_loader = DataLoader(validationset, batch_size=batch_size, shuffle=False, num_workers=4)
+test_data_loader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=4)
 
 '''
 # example image plot

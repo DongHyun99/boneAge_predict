@@ -19,7 +19,7 @@ torch.cuda.manual_seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
-epochs = 10
+epochs = 2
 batch_size = 4
 es = EarlyStopping()
 
