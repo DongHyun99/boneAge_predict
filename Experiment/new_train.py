@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import cv2
 from multiprocessing import freeze_support
 from torchvision import transforms
-from model.BoneAgeNet import BoneAgeNet
+from model.BoneageModel import BoneAgeNet
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
