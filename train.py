@@ -129,6 +129,7 @@ def main():
         val_list.append(val_loss)
 
         if (epoch+1) % 5 == 0: save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.pt'.format(epoch+1, train_loss, val_loss))
+        
         if best_loss > val_loss:
             best_model = states
             best_loss = val_loss
