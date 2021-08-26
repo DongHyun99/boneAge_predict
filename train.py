@@ -21,7 +21,7 @@ torch.cuda.manual_seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
-epochs = 2
+epochs = 200
 batch_size = 4
 es = EarlyStopping()
 save_path = 'D:/model/'
@@ -129,7 +129,7 @@ def main():
         val_list.append(val_loss)
 
         if (epoch+1) % 5 == 0: save_checkpoint(states, filename='epoch-{}-loss-{:.4f}-val_loss-{:.4f}.pt'.format(epoch+1, train_loss, val_loss))
-        
+
         if best_loss > val_loss:
             best_model = states
             best_loss = val_loss
@@ -145,13 +145,15 @@ def display_loss(num, loss_list, val_list):
     plt.figure()
     plt.plot([x for x in range(num)], loss_list, label='loss')
     plt.plot([x for x in range(num)], val_list, label='validation_loss')
+    plt.axis('equal')
     
     plt.xlabel('epoch')
     plt.ylabel('loss')
     plt.legend()
 
+    plt.savefig('result/loss.png',facecolor='#eeeeee')
     plt.show()
-    plt.savefig('result/loss.png')
+    
 
 #%%
 if __name__ == '__main__':

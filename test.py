@@ -9,7 +9,6 @@ from model.BoneageModel import BoneAgeNet
 
 from multiprocessing.spawn import freeze_support
 import datetime
-import matplotlib.pyplot as plt
 import numpy as np
 
 # For reproducibility use the seeds below
