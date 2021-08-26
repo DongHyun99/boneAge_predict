@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from torch.utils.data import Dataset, DataLoader
-from earlyStopping import EarlyStopping
 import torch
 import pandas as pd
 import numpy as np
@@ -20,7 +19,6 @@ test_img_path = 'bone_data/test/'
 test_csv_path = 'bone_data/test_dataset.csv'
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-earlystop = EarlyStopping() # 기본 10 epoch
 
 # dataset setting
 train_data = pd.read_csv(train_csv_path)
