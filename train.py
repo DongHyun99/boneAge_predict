@@ -41,7 +41,7 @@ if __name__ == '__main__':
     model.to(device)
     
 # loss, optimizer, scheduler
-criterion = nn.MSELoss() # L1Loss / MSELoss
+criterion = nn.L1Loss() # L1Loss / MSELoss
 optimizer = optim.Adam(model.parameters())
 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=10, verbose=1, eps=0.0001, cooldown=5, min_lr=0.0001)
 
@@ -137,7 +137,7 @@ def main():
         if es.step(val_loss):
             break
 
-    save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.tar'.format(best_model['epoch']+1,best_loss))
+    save_checkpoint(best_model, filename='BEST_MODEL-epoch-{}-val_loss-{:.4f}.pt'.format(best_model['epoch']+1,best_loss))
     return loss_list, val_list
 
 # loss visualization

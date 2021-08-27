@@ -14,6 +14,7 @@
 * matplotlib  
 * timm  
 * torchsummary  
+* UniformAugment (git+https://github.com/tgilewicz/uniformaugment/)
 
 
 ## DataSet  
@@ -45,7 +46,7 @@ dataset 각각의 image size는 다음과 같이 나온다. (재각각이다.)
 
 ## loss  
 
-loss: L1Loss(MAE)를 사용했고 MSELoss는 실험 중  
+loss: L1Loss(MAE)를 사용 
 optimizer: Adam, 파라미터는 기본 값 그대로 사용  
 lr_scheduler: ReduceLROnPlateau 사용  
 
@@ -56,6 +57,7 @@ lr_scheduler: ReduceLROnPlateau 사용
 
 >MAE: 27.023 -> 14.04613 -> 12.00912 -> 8.547(month)  
 
+MSELoss를 사용 시 MAE: 10.46805  
 개선중.. (4~6 MAE를 목표로)  
 
 
