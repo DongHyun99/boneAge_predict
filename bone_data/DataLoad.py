@@ -34,8 +34,13 @@ test_data.iloc[:, 1:3] = test_data.iloc[:, 1:3].astype(np.float)
 age_max = np.max(train_data.boneage) # 228 month
 age_min = np.min(train_data.boneage) # 1 month
 
+# Augmentation List
+aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)),
+    transforms.RandomHorizontalFlip(p=1),
+    transforms.RandomRotation(20)]
+
 # Transform Setting
-train_composed = transforms.Compose([transforms.Resize((500,500)),transforms.ToTensor()])
+train_composed = transforms.Compose([transforms.RandomApply(aug_list, p=0.3),transforms.Resize((500,500)),transforms.ToTensor()])
 
 #%%
 # BoneData Class
@@ -55,7 +60,13 @@ class BoneDataSet(Dataset):
 
         # contrast limited adaptive historgram equalization
         clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
-        img= clahe.apply(img)
+        img = clahe.apply(img)
+
+        sub = img.shape[0]-img.shape[1]
+        if sub < 0:
+            img = cv2.copyMakeBorder(img, int(-sub/2), int(-sub/2), 0, 0, cv2.BORDER_CONSTANT, value=[0,0,0])
+        else:
+            img = cv2.copyMakeBorder(img, 0, 0, int(sub/2), int(sub/2), cv2.BORDER_CONSTANT, value=[0,0,0])            
 
         # convert cv to PIL
         img = Image.fromarray(img.astype(np.float64))
@@ -74,8 +85,8 @@ class BoneDataSet(Dataset):
 
 #%%
 trainset = BoneDataSet(train_img_path, train_data, train_composed)
-validationset = BoneDataSet(validation_img_path, val_data, eval_composed)
-testset = BoneDataSet(test_img_path, test_data, eval_composed)
+validationset = BoneDataSet(validation_img_path, val_data, train_composed)
+testset = BoneDataSet(test_img_path, test_data, train_composed)
 
 train_data_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4)
 val_data_loader = DataLoader(validationset, batch_size=batch_size, shuffle=False, num_workers=4)
@@ -86,7 +97,7 @@ test_data_loader = DataLoader(testset, batch_size=batch_size, shuffle=False, num
 from multiprocessing.spawn import freeze_support
 import matplotlib.pyplot as plt
 
-'''
+
 if __name__ == '__main__':
     freeze_support()
     sample_batch = next(iter(val_data_loader))
@@ -94,4 +105,3 @@ if __name__ == '__main__':
     img = img.permute(1,2,0)
     plt.imshow(img, cmap='gray')
     plt.show()
-'''
