@@ -36,11 +36,11 @@ age_min = np.min(train_data.boneage) # 1 month
 
 # Augmentation List
 aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)),
-    transforms.RandomHorizontalFlip(p=1),
+    transforms.RandomHorizontalFlip(),
     transforms.RandomRotation(20)]
 
 # Transform Setting
-train_composed = transforms.Compose([transforms.RandomApply(aug_list, p=0.3),transforms.Resize((500,500)),transforms.ToTensor()])
+train_composed = transforms.Compose([transforms.RandomApply(aug_list),transforms.Resize((500,500)),transforms.ToTensor()])
 
 #%%
 # BoneData Class
