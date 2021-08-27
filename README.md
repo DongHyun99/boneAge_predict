@@ -66,7 +66,7 @@ MSELoss를 사용 시 MAE: 10.46805
 - [ ] EfficientNet v2: Adaptive Regularization with Progressive Learning  
 - [ ] CAM 혹은 Grad-CAM을 사용해서 heatMap 확인해보기 (gender와 concatenate 되는 구조 때문에 잘 될지 모르겠음) 
 - [ ] Loss를 MAE -> MSE로 변경 후 차이점 확인
-- [ ] Rand-Augment 혹은 Uniform-Augment 적용 (Rotation, translation, zoom up, flip.. etc)
+- [x] Rand-Augment 혹은 Uniform-Augment 적용 (Rotation, translation, zoom up, flip.. etc)
 - [ ] 이미지에 손상을 주지 않고 resize가 가능한 방법 모색 (FCN, image Padding, self-supervised learning(micle))
 
 ***  
