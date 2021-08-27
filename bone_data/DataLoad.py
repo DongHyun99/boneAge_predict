@@ -7,8 +7,6 @@ import numpy as np
 import torchvision.transforms as transforms
 import cv2
 from PIL import Image
-from UniformAugment import UniformAugment
-from UniformAugment.augmentations import ShearX, ShearY, TranslateX, TranslateY, Rotate, Flip
 
 # Hyperparameters Setting
 batch_size = 4
@@ -36,24 +34,8 @@ test_data.iloc[:, 1:3] = test_data.iloc[:, 1:3].astype(np.float)
 age_max = np.max(train_data.boneage) # 228 month
 age_min = np.min(train_data.boneage) # 1 month
 
-#augment list
-def augment_list(for_autoaug=False):  # 16 oeprations and their ranges
-    l = [
-        (ShearX, -0.3, 0.3),  # 0
-        (ShearY, -0.3, 0.3),  # 1
-        (TranslateX, -0.45, 0.45),  # 2
-        (TranslateY, -0.45, 0.45),  # 3
-        (Rotate, -30, 30),  # 4
-        (Flip, 0, 1)  # 5
-    ]
-
-    return l
-
 # Transform Setting
-aug = UniformAugment()
-aug._augment_list = augment_list(False)
-train_composed = transforms.Compose([aug, transforms.Grayscale(1), transforms.Resize((500,500)),transforms.ToTensor()])
-eval_composed = transforms.Compose([transforms.Grayscale(1), transforms.Resize((500,500)),transforms.ToTensor()])
+train_composed = transforms.Compose([transforms.Resize((500,500)),transforms.ToTensor()])
 
 #%%
 # BoneData Class
@@ -69,15 +51,14 @@ class BoneDataSet(Dataset):
 
     def __getitem__(self, idx):
         img_name = self.img + str(self.dataframe.id[idx]) + '.png'
-        img = cv2.imread(img_name,cv2.IMREAD_GRAYSCALE)
+        img = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
 
         # contrast limited adaptive historgram equalization
         clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
         img= clahe.apply(img)
 
         # convert cv to PIL
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        img = Image.fromarray(img.astype('uint8'))
+        img = Image.fromarray(img.astype(np.float64))
         
         # 입력값을 1차원 이상의 배열로 변환
         gender = np.atleast_1d(self.dataframe.iloc[idx,2])

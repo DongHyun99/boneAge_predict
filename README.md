@@ -55,7 +55,8 @@ lr_scheduler: ReduceLROnPlateau 사용
 
 ## Accuracy (MAE)  
 
->MAE: 27.023 -> 14.04613 -> 12.00912 -> 8.547(month)  
+>MAE: 27.023 ->
+ 14.04613 -> 12.00912 -> 8.547(month)  
 
 MSELoss를 사용 시 MAE: 10.46805  
 개선중.. (4~6 MAE를 목표로)  
