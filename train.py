@@ -75,7 +75,7 @@ def train(model, train_data, epoch):
 
         epoch_loss += loss.item()
 
-        if (batch_no + 1) % 25 == 0: print('Epoch {}: {}/12611, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item())) # 100장마다 출력
+        if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/12611, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item())) # 100장마다 출력
     return epoch_loss / 3153
 
 def eval(model, val_data, epoch):
@@ -100,7 +100,7 @@ def eval(model, val_data, epoch):
 
             epoch_val_loss += loss.item()
 
-            if (batch_no + 1) % 25 == 0: print('Epoch {}: {}/1425, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item())) # 100장마다 출력
+            if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/1425, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item())) # 100장마다 출력
     return epoch_val_loss / 357
 
 def main():

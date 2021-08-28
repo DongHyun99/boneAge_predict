@@ -41,7 +41,7 @@ aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)),
 
 # Transform Setting
 train_composed = transforms.Compose([transforms.RandomApply(aug_list),transforms.Resize((500,500)),transforms.ToTensor()])
-validation_composed = transforms.Compose(transforms.Resize((500,500)),transforms.ToTensor()])
+validation_composed = transforms.Compose([transforms.Resize((500,500)),transforms.ToTensor()])
 
 #%%
 # BoneData Class
