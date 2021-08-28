@@ -93,7 +93,7 @@ train_data_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, nu
 val_data_loader = DataLoader(validationset, batch_size=batch_size, shuffle=False, num_workers=4)
 test_data_loader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=4)
 
-
+'''
 # example image plot
 from multiprocessing.spawn import freeze_support
 import matplotlib.pyplot as plt
@@ -106,3 +106,4 @@ if __name__ == '__main__':
     img = img.permute(1,2,0)
     plt.imshow(img, cmap='gray')
     plt.show()
+'''
