@@ -50,13 +50,13 @@ loss: L1Loss(MAE)를 사용
 optimizer: Adam, 파라미터는 기본 값 그대로 사용  
 lr_scheduler: ReduceLROnPlateau 사용  
 
-<img src="./result/result_image/efficientnetv2-4-loss.png" width="60%">   
+<img src="./result/result_image/efficientnetv2-5-loss.png" width="60%">   
 
 
 ## Accuracy (MAE)  
 
 >MAE: 27.023 ->
- 14.04613 -> 12.00912 -> 8.547(month)  
+ 14.04613 -> 12.00912 -> 8.547 -> 7.829(month)  
 
 MSELoss를 사용 시 MAE: 10.46805  
 개선중.. (4~6 MAE를 목표로)  

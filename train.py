@@ -21,13 +21,13 @@ torch.cuda.manual_seed(1498920)
 torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
-epochs = 200
+epochs = 600
 batch_size = 4
 es = EarlyStopping()
 save_path = 'D:/model/'
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-earlystop = EarlyStopping() # 기본 10 epoch
+earlystop = EarlyStopping(patience=30) # 기본 10 epoch
 
 # data load
 train_data = train_data_loader
@@ -112,7 +112,6 @@ def main():
     line = '======================================================================='
     for epoch in range(epochs):
         train_loss = train(model,train_data, epoch)
-        print(line)
         val_loss = eval(model, val_data, epoch)
         scheduler.step(val_loss)
         print('{}\nepoch:{}, loss:{}, val_loss:{}\n{}'.format(datetime.datetime.now(),epoch+1, train_loss, val_loss, line))

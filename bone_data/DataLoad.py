@@ -10,6 +10,7 @@ from PIL import Image
 
 # Hyperparameters Setting
 batch_size = 4
+img_size = 500
 
 train_img_path = 'bone_data/train/'
 train_csv_path = 'bone_data/training_dataset.csv'
@@ -35,13 +36,14 @@ age_max = np.max(train_data.boneage) # 228 month
 age_min = np.min(train_data.boneage) # 1 month
 
 # Augmentation List
-aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(20)]
+aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)), # tlanslation <= 20
+    transforms.RandomHorizontalFlip(), # flip
+    transforms.RandomRotation(20), # rotate <=20%
+    transforms.RandomResizedCrop(size=(img_size, img_size), scale=(0.8, 1), ratio=(1, 1))] # zoom <=20%
 
 # Transform Setting
-train_composed = transforms.Compose([transforms.RandomApply(aug_list),transforms.Resize((500,500)),transforms.ToTensor()])
-validation_composed = transforms.Compose([transforms.Resize((500,500)),transforms.ToTensor()])
+train_composed = transforms.Compose([transforms.RandomApply(aug_list),transforms.Resize((img_size,img_size)),transforms.ToTensor()])
+validation_composed = transforms.Compose([transforms.Resize((img_size,img_size)),transforms.ToTensor()])
 
 #%%
 # BoneData Class
@@ -101,7 +103,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     freeze_support()
-    sample_batch = next(iter(val_data_loader))
+    sample_batch = next(iter(train_data_loader))
     img = sample_batch['image'][0]
     img = img.permute(1,2,0)
     plt.imshow(img, cmap='gray')
