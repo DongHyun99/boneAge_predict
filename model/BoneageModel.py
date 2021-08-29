@@ -16,7 +16,7 @@ class BoneAgeNet(nn.Module):
         super(BoneAgeNet, self).__init__()
         
         # Backbone
-        self.efficientnet_v2 = efficientnetv2_m(in_chans=1, drop_rate=0.4, drop_path_rate=0.4)
+        self.efficientnet_v2 = efficientnetv2_m(in_chans=1, drop_rate=0.1, drop_path_rate=0.1)
         self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(2)
         self.efficientnet_v2.classifier = nn.Identity()
         self.flatten1 = nn.Flatten()
