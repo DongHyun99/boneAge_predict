@@ -62,13 +62,14 @@ MSELoss를 사용 시 MAE: 10.46805
 개선중.. (4~6 MAE를 목표로)  
 
 
-## To-do's ```2021-08-26~```  
+## To-do's ```2021-08-30~```  
 
 - [ ] EfficientNet v2: Adaptive Regularization with Progressive Learning  
 - [ ] CAM 혹은 Grad-CAM을 사용해서 heatMap 확인해보기 (gender와 concatenate 되는 구조 때문에 잘 될지 모르겠음) 
-- [ ] Loss를 MAE -> MSE로 변경 후 차이점 확인
 - [x] Rand-Augment 혹은 Uniform-Augment 적용 (Rotation, translation, zoom up, flip.. etc)
-- [ ] 이미지에 손상을 주지 않고 resize가 가능한 방법 모색 (FCN, image Padding, self-supervised learning(micle))
+- [x] 이미지에 손상을 주지 않고 resize가 가능한 방법 모색 (FCN, image Padding, self-supervised learning(micle)) -> padding 사용해서 해결
+- [ ] Augmentation: crop/translate 둘중 하나만 하는게 좋을것 같음 / flip 사용하지말고 오른손 이미지 및 이상한 이미지 쳐내기 / rotationeh 5~10% 정도
+- [ ] Histogram 그려보고 데이터 적은쪽은 Augmentation으로 데이터 늘리는 쪽이 더 좋을지도?
 
 ***  
 

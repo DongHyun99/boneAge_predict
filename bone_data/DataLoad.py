@@ -32,9 +32,6 @@ val_data.iloc[:, 1:3] = val_data.iloc[:, 1:3].astype(np.float)
 test_data = pd.read_csv(test_csv_path)
 test_data.iloc[:, 1:3] = test_data.iloc[:, 1:3].astype(np.float)
 
-age_max = np.max(train_data.boneage) # 228 month
-age_min = np.min(train_data.boneage) # 1 month
-
 # Augmentation List
 aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)), # tlanslation <= 20
     transforms.RandomHorizontalFlip(), # flip
@@ -65,6 +62,7 @@ class BoneDataSet(Dataset):
         clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
         img = clahe.apply(img)
 
+        # img 비율을 맞춰주기 위한 pad 추가
         sub = img.shape[0]-img.shape[1]
         if sub < 0:
             img = cv2.copyMakeBorder(img, int(-sub/2), int(-sub/2), 0, 0, cv2.BORDER_CONSTANT, value=[0,0,0])
@@ -80,6 +78,7 @@ class BoneDataSet(Dataset):
         sample = {'image':img, 'gender':gender, 'bone_age':bone_age}
 
         if self.transform:
+            # age & gender는 미리 tensor로 변환, image는 transform을 적용
             sample['bone_age'] = torch.from_numpy(sample['bone_age']).float()
             sample['gender'] = torch.from_numpy(sample['gender']).float()
             sample['image'] = self.transform(sample['image'])

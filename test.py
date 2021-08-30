@@ -3,7 +3,6 @@
 import torch
 import torch.nn as nn
 
-from earlyStopping import EarlyStopping
 from bone_data.DataLoad import test_data_loader, test_data
 from model.BoneageModel import BoneAgeNet
 
@@ -18,9 +17,7 @@ torch.backends.cudnn.deterministic=True
 
 # Hyperparameters Setting 
 save_path = 'D:/model/'
-
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-earlystop = EarlyStopping() # 기본 10 epoch
 
 # data load
 model = BoneAgeNet()
