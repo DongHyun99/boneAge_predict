@@ -33,10 +33,8 @@ test_data = pd.read_csv(test_csv_path)
 test_data.iloc[:, 1:3] = test_data.iloc[:, 1:3].astype(np.float)
 
 # Augmentation List
-aug_list=[transforms.RandomAffine(0, translate=(0.2, 0.2)), # tlanslation <= 20
-    transforms.RandomHorizontalFlip(), # flip
-    transforms.RandomRotation(20), # rotate <=20%
-    transforms.RandomResizedCrop(size=(img_size, img_size), scale=(0.8, 1), ratio=(1, 1))] # zoom <=20%
+aug_list=[transforms.RandomAffine(0, translate=(0.1, 0.1)), # tlanslation <= 20
+    transforms.RandomRotation(20)] # rotate <=20% 
 
 # Transform Setting
 train_composed = transforms.Compose([transforms.RandomApply(aug_list),transforms.Resize((img_size,img_size)),transforms.ToTensor()])
@@ -59,7 +57,7 @@ class BoneDataSet(Dataset):
         img = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
 
         # contrast limited adaptive historgram equalization
-        clahe = cv2.createCLAHE(clipLimit=6.0, tileGridSize=(8,8))
+        clahe = cv2.createCLAHE()
         img = clahe.apply(img)
 
         # img 비율을 맞춰주기 위한 pad 추가
@@ -102,9 +100,28 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     freeze_support()
-    sample_batch = next(iter(train_data_loader))
-    img = sample_batch['image'][0]
-    img = img.permute(1,2,0)
-    plt.imshow(img, cmap='gray')
+    sample_batch = next(iter(val_data_loader))
+    img1 = sample_batch['image'][0]
+    img2 = sample_batch['image'][1]
+    img3 = sample_batch['image'][2]
+    img4 = sample_batch['image'][3]
+    
+    img1 = img1.permute(1,2,0)
+    img2 = img2.permute(1,2,0)
+    img3 = img3.permute(1,2,0)
+    img4 = img4.permute(1,2,0)
+
+    plt.subplot(221)
+    plt.imshow(img1, cmap='gray')
+
+    plt.subplot(222)
+    plt.imshow(img2, cmap='gray')
+
+    plt.subplot(223)
+    plt.imshow(img3, cmap='gray')
+
+    plt.subplot(224)
+    plt.imshow(img4, cmap='gray')
+
     plt.show()
 '''

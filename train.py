@@ -23,7 +23,7 @@ torch.backends.cudnn.deterministic=True
 # Hyperparameters Setting 
 epochs = 600
 batch_size = 4
-es = EarlyStopping()
+es = EarlyStopping(patience=30)
 save_path = 'D:/model/'
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

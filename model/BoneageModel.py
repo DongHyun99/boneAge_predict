@@ -3,7 +3,6 @@
 from timm.models.efficientnet import _gen_efficientnetv2_m
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
