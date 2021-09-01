@@ -40,10 +40,15 @@ if __name__ == '__main__':
     # declare model
     model.to(device)
     
-# loss, optimizer, scheduler
-criterion = nn.L1Loss() # L1Loss / MSELoss
-optimizer = optim.Adam(model.parameters())
-scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=10, verbose=1, eps=0.0001, cooldown=5, min_lr=0.0001)
+    # loss, optimizer, scheduler
+    criterion = nn.L1Loss() # L1Loss / MSELoss
+    optimizer = optim.Adam(model.parameters())
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.8, patience=10, verbose=1, eps=0.0001, cooldown=5, min_lr=0.0001)
+
+    # load pre_trained model
+    #checkpoint = torch.load(save_path+'epoch-90-loss-6.1438-val_loss-7.3173.pt')
+    #model.load_state_dict(checkpoint['model_state_dict'])
+    #optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 #%%
 
@@ -75,8 +80,8 @@ def train(model, train_data, epoch):
 
         epoch_loss += loss.item()
 
-        if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/12611, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item()), end='') # 100장마다 출력
-    return epoch_loss / 3153
+        if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/12611, batch loss: {}'.format(epoch+1,batch_size*(batch_no+1), loss.item()), end='') # 100장마다 출력
+    return epoch_loss / (12611//batch_size)
 
 def eval(model, val_data, epoch):
     model.eval()
@@ -100,8 +105,8 @@ def eval(model, val_data, epoch):
 
             epoch_val_loss += loss.item()
 
-            if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/1425, batch loss: {}'.format(epoch+1,4*(batch_no+1), loss.item()), end='') # 100장마다 출력
-    return epoch_val_loss / 357
+            if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/1425, batch loss: {}'.format(epoch+1,batch_size*(batch_no+1), loss.item()), end='') # 100장마다 출력
+    return epoch_val_loss / (1425//batch_size)
 
 def main():
     best_loss = math.inf
