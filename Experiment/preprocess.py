@@ -3,15 +3,13 @@ import numpy as np
 
 #15555, 15588, 15507
 
-train_dataset_path = 'bone_data/test/19.jpg'
+train_dataset_path = 'bone_data/test/4475.png'
 
 img = cv2.imread(train_dataset_path,cv2.IMREAD_GRAYSCALE)
 
-# img = cv2.subtract(img, np.average(img.flatten())-40)
-#clahe = cv2.createCLAHE()
-#img = clahe.apply(img)
-
-mat, img = cv2.threshold(img,np.average(img.flatten()),255,cv2.THRESH_BINARY)
+#img = cv2.subtract(img, np.average(img.flatten())-40)
+clahe = cv2.createCLAHE()
+img = clahe.apply(img)
 
 
 sub = img.shape[0]-img.shape[1]

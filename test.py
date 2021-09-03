@@ -9,6 +9,7 @@ from model.BoneageModel import BoneAgeNet
 from multiprocessing.spawn import freeze_support
 import datetime
 import numpy as np
+import ttach as tta
 
 # For reproducibility use the seeds below
 torch.manual_seed(1498920)
@@ -48,12 +49,21 @@ def eval(model, test_data):
             gender = batch['gender'].to(device)
             age = batch['bone_age'].to(device)
             
-            # Forward propagation (순전파)
-            output = model(img, gender)
-            loss = criterion(output, age)
+            avg_pred = []
 
-            preds = output.cpu().numpy()
-            preds = preds.reshape(preds.shape[0])
+            transforms = tta.Compose([tta.FiveCrops(crop_height=480, crop_width=480)])
+
+            for transformer in transforms:
+                # Forward propagation (순전파)
+                augmented_image = transformer.augment_image(img)
+                output = model(augmented_image, gender)
+                loss = criterion(output, age)
+
+                preds = output.cpu().numpy()
+                preds = preds.reshape(preds.shape[0])
+                avg_pred.append(preds)
+
+            preds = sum(avg_pred,0.0)/len(avg_pred)
             result_array = np.concatenate((result_array,preds))
 
             test_loss += loss.item()
@@ -65,7 +75,7 @@ def eval(model, test_data):
 if __name__ == '__main__':
     freeze_support()
 
-    checkpoint = torch.load(save_path+'epoch-90-loss-6.1438-val_loss-7.3173.pt')
+    checkpoint = torch.load(save_path+'epoch-10-loss-11.5319-val_loss-10.1474.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
 
     print('{}\n==============================test start==============================\n'.format(datetime.datetime.now()))
