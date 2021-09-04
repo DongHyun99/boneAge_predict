@@ -7,7 +7,7 @@ import torch.nn as nn
 
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
-    model = _gen_efficientnetv2_s('efficientnetv2_s', pretrained=pretrained, **kwargs)
+    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=pretrained, **kwargs)
     return model
 
 class BoneAgeNet(nn.Module):
@@ -18,7 +18,7 @@ class BoneAgeNet(nn.Module):
         # Backbone
 
         self.efficientnet_v2 = efficientnetv2_m(in_chans=1)
-        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(6)
+        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(2)
 
         self.efficientnet_v2.classifier = nn.Identity()
         self.flatten1 = nn.Flatten()
@@ -29,7 +29,7 @@ class BoneAgeNet(nn.Module):
         self.flatten2 = nn.Flatten()
 
         # FC Layer
-        self.fc_1 = nn.Linear(46096, 1000)
+        self.fc_1 = nn.Linear(5136, 1000)
         self.swish1 = nn.SiLU(inplace=True)
 
         self.fc_2 = nn.Linear(1000,1000)
