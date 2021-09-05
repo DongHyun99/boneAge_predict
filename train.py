@@ -27,7 +27,6 @@ es = EarlyStopping(patience=15)
 save_path = 'D:/model/'
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-earlystop = EarlyStopping(patience=30) # 기본 10 epoch
 
 # data load
 train_data = train_data_loader
