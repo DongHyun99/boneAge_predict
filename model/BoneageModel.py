@@ -5,7 +5,7 @@ from timm.models.efficientnet import _gen_efficientnetv2_m, _gen_efficientnetv2_
 import torch
 import torch.nn as nn
 
-def efficientnetv2_m(pretrained=False, **kwargs):
+def efficientnetv2_s(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
     model = _gen_efficientnetv2_s('efficientnetv2_s', pretrained=pretrained, **kwargs)
     return model
@@ -17,19 +17,18 @@ class BoneAgeNet(nn.Module):
         
         # Backbone
 
-        self.efficientnet_v2 = efficientnetv2_m(in_chans=1)
+        self.efficientnet_v2 = efficientnetv2_s(in_chans=1, drop_rate=0.1, drop_path_rate=0.1)
         self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(3)
-
         self.efficientnet_v2.classifier = nn.Identity()
         self.flatten1 = nn.Flatten()
 
         # Gender
-        self.gender = nn.Linear(1,16)
+        self.gender = nn.Linear(1,32)
         self.gen_swish = nn.SiLU(inplace=True)
         self.flatten2 = nn.Flatten()
 
         # FC Layer
-        self.fc_1 = nn.Linear(11536, 1000)
+        self.fc_1 = nn.Linear(11552, 1000)
         self.swish1 = nn.SiLU(inplace=True)
 
         self.fc_2 = nn.Linear(1000,1000)
