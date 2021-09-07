@@ -2,11 +2,10 @@
 
 import torch
 import torch.nn as nn
-from torch.nn import parameter
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
-from earlyStopping import EarlyStopping
+from utils import EarlyStopping
 from bone_data.DataLoad import train_data_loader,val_data_loader
 from model.BoneageModel import BoneAgeNet
 
@@ -23,7 +22,7 @@ torch.backends.cudnn.deterministic=True
 # Hyperparameters Setting 
 epochs = 600
 batch_size = 4
-es = EarlyStopping(patience=15)
+es = EarlyStopping(patience=30)
 save_path = 'D:/model/'
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -31,7 +30,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # data load
 train_data = train_data_loader
 val_data = val_data_loader
-model = BoneAgeNet()
+model = BoneAgeNet(drop_rate=0.3)
 
 if __name__ == '__main__':
     freeze_support()

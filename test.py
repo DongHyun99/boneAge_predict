@@ -51,7 +51,7 @@ def eval(model, test_data):
             
             avg_pred = []
 
-            transforms = tta.Compose([tta.FiveCrops(crop_height=480, crop_width=480)])
+            transforms = tta.Compose([tta.FiveCrops(crop_height=470, crop_width=470)])
 
             for transformer in transforms:
                 # Forward propagation (순전파)
@@ -75,7 +75,7 @@ def eval(model, test_data):
 if __name__ == '__main__':
     freeze_support()
 
-    checkpoint = torch.load(save_path+'BEST_MODEL-epoch-39-val_loss-7.3768.pt')
+    checkpoint = torch.load(save_path+'epoch-90-loss-6.1438-val_loss-7.3173.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
 
     print('{}\n==============================test start==============================\n'.format(datetime.datetime.now()))
