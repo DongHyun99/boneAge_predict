@@ -5,35 +5,30 @@ from timm.models.efficientnet import _gen_efficientnetv2_m
 import torch
 import torch.nn as nn
 
-def efficientnetv2_m(pretrained=False, **kwargs):
-    """ EfficientNet-V2 Small. """
-    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=pretrained, **kwargs)
-    return model
-
 class BoneAgeNet(nn.Module):
 
     def __init__(self, drop_rate=0.0):
         super(BoneAgeNet, self).__init__()
         
         # Backbone
-        self.efficientnet_v2 = efficientnetv2_m(in_chans=1, drop_rate=0.1, drop_path_rate=0.1)
-        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(3)
+        self.efficientnet_v2 = _gen_efficientnetv2_m('efficientnetv2_m',in_chans=1)
+        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(2)
         self.efficientnet_v2.classifier = nn.Identity()
         self.flatten1 = nn.Flatten()
 
         # Gender
         self.gender = nn.Linear(1,16)
-        self.gen_swish = nn.SiLU(inplace=True)
+        self.gen_mish = nn.Mish(inplace=True)
         self.flatten2 = nn.Flatten()
 
         # FC Layer1
-        self.fc_1 = nn.Linear(11536, 1000)
-        self.swish1 = nn.SiLU(inplace=True)
+        self.fc_1 = nn.Linear(5136, 1000)
+        self.mish1 = nn.Mish(inplace=True)
         self.dropout1 = nn.Dropout(p=drop_rate)
         
         # FC Layer2
         self.fc_2 = nn.Linear(1000,1000)
-        self.swish2 = nn.SiLU(inplace=True)
+        self.mish2 = nn.Mish(inplace=True)
         self.dropout2 = nn.Dropout(p=drop_rate)
 
         # Final Layer
@@ -44,15 +39,15 @@ class BoneAgeNet(nn.Module):
         x = self.flatten1(x)
 
         y = self.gender(y)
-        y = self.gen_swish(y)
+        y = self.gen_mish(y)
         y= self.flatten2(y)
 
         z = self.fc_1(torch.cat([x, y], 1))
-        z = self.swish1(z)
+        z = self.mish1(z)
         z = self.dropout1(z)
 
         z = self.fc_2(z)
-        z = self.swish2(z)
+        z = self.mish2(z)
         z = self.dropout2(z)
 
         z = self.fc_3(z)

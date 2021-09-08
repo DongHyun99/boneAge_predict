@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 
 #15555, 15588, 15507
 
