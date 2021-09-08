@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from timm.models.efficientnet import _gen_efficientnetv2_m
+from timm.models.efficientnet import _gen_efficientnetv2_m, _gen_efficientnetv2_s
 
 import torch
 import torch.nn as nn
@@ -11,8 +11,8 @@ class BoneAgeNet(nn.Module):
         super(BoneAgeNet, self).__init__()
         
         # Backbone
-        self.efficientnet_v2 = _gen_efficientnetv2_m('efficientnetv2_m',in_chans=1)
-        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(2)
+        self.efficientnet_v2 = _gen_efficientnetv2_s('efficientnetv2_s',in_chans=1)
+        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(3)
         self.efficientnet_v2.classifier = nn.Identity()
         self.flatten1 = nn.Flatten()
 
@@ -22,7 +22,7 @@ class BoneAgeNet(nn.Module):
         self.flatten2 = nn.Flatten()
 
         # FC Layer1
-        self.fc_1 = nn.Linear(5136, 1000)
+        self.fc_1 = nn.Linear(11536, 1000)
         self.mish1 = nn.Mish(inplace=True)
         self.dropout1 = nn.Dropout(p=drop_rate)
         
