@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
+from torch.utils.tensorboard import SummaryWriter
 
 from utils import EarlyStopping
 from bone_data.DataLoad import train_data_loader,val_data_loader
@@ -28,6 +29,7 @@ save_path = 'D:/model/'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # data load
+writer = SummaryWriter()
 train_data = train_data_loader
 val_data = val_data_loader
 model = BoneAgeNet(drop_rate=0.2)
@@ -77,6 +79,7 @@ def train(model, train_data, epoch):
         optimizer.step() # optim step
 
         epoch_loss += loss.item()
+        writer.add_scalar('BatchLoss', loss.item(), batch_no)
 
         if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/12611, batch loss: {}'.format(epoch+1,batch_size*(batch_no+1), loss.item()), end='') # 100장마다 출력
     return epoch_loss / (12611//batch_size)
@@ -102,6 +105,7 @@ def eval(model, val_data, epoch):
             loss = criterion(output, age)
 
             epoch_val_loss += loss.item()
+            writer.add_scalar('BatchValLoss', loss.item(), batch_no)
 
             if (batch_no + 1) % 25 == 0: print('\rEpoch {}: {}/1425, batch loss: {}'.format(epoch+1,batch_size*(batch_no+1), loss.item()), end='') # 100장마다 출력
     return epoch_val_loss / (1425//batch_size)
@@ -117,6 +121,10 @@ def main():
         train_loss = train(model,train_data, epoch)
         val_loss = eval(model, val_data, epoch)
         scheduler.step(val_loss)
+
+        writer.add_scalar('EpochLoss', train_loss, epoch)
+        writer.add_scalar('EpochValLoss', val_loss,epoch)
+
         print('{}\nepoch:{}, loss:{}, val_loss:{}\n{}'.format(datetime.datetime.now(),epoch+1, train_loss, val_loss, line))
         
         states = {
