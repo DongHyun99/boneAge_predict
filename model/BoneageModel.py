@@ -45,12 +45,12 @@ class BoneAgeNet(nn.Module):
         y= self.flatten2(y)
 
         z = self.fc_1(torch.cat([x, y], 1))
-        z = self.bn1(z)
+        #z = self.bn1(z)
         z = self.mish1(z)
         z = self.dropout1(z)
 
         z = self.fc_2(z)
-        z = self.bn2(z)
+        #z = self.bn2(z)
         z = self.mish2(z)
         z = self.dropout2(z)
 

@@ -57,7 +57,8 @@ class BoneDataSet(Dataset):
         img = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
 
         # contrast limited adaptive historgram equalization
-        clahe = cv2.createCLAHE()
+        img=cv2.subtract(img, np.average(img.flatten()))
+        clahe = cv2.createCLAHE(clipLimit=15)
         img = clahe.apply(img)
 
         # img 비율을 맞춰주기 위한 pad 추가
