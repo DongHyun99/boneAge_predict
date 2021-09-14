@@ -36,7 +36,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 writer = SummaryWriter()
 train_data = train_data_loader
 val_data = val_data_loader
-model = BoneAgeNet(drop_rate=0)
+model = BoneAgeNet()
 
 if __name__ == '__main__':
     freeze_support()

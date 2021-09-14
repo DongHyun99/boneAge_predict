@@ -34,7 +34,7 @@ test_data.iloc[:, 1:3] = test_data.iloc[:, 1:3].astype(np.float)
 
 # Augmentation List
 aug_list=[transforms.RandomAffine(0, translate=(0.1, 0.1)), # tlanslation <= 20
-    transforms.RandomRotation(20)] # rotate <=20% 
+    transforms.RandomRotation(30)] # rotate <=20% 
 
 # Transform Setting
 train_composed = transforms.Compose([transforms.RandomApply(aug_list),transforms.Resize((img_size,img_size)),transforms.ToTensor()])

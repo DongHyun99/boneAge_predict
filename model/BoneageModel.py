@@ -23,13 +23,11 @@ class BoneAgeNet(nn.Module):
 
         # FC Layer1
         self.fc_1 = nn.Linear(5136, 1000)
-        self.bn1 = nn.BatchNorm1d(1000)
         self.mish1 = nn.Mish(inplace=True)
         self.dropout1 = nn.Dropout(p=drop_rate)
         
         # FC Layer2
         self.fc_2 = nn.Linear(1000,1000)
-        self.bn2 = nn.BatchNorm1d(1000)
         self.mish2 = nn.Mish(inplace=True)
         self.dropout2 = nn.Dropout(p=drop_rate)
 
@@ -45,12 +43,10 @@ class BoneAgeNet(nn.Module):
         y= self.flatten2(y)
 
         z = self.fc_1(torch.cat([x, y], 1))
-        #z = self.bn1(z)
         z = self.mish1(z)
         z = self.dropout1(z)
 
         z = self.fc_2(z)
-        #z = self.bn2(z)
         z = self.mish2(z)
         z = self.dropout2(z)
 

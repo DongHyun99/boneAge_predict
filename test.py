@@ -75,7 +75,7 @@ def eval(model, test_data):
 if __name__ == '__main__':
     freeze_support()
 
-    checkpoint = torch.load(save_path+'s model + not regularization/epoch-80-loss-5.8601-val_loss-7.2967.pt')
+    checkpoint = torch.load(save_path+'BEST_MODEL-epoch-99-val_loss-6.9788.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
 
     print('{}\n==============================test start==============================\n'.format(datetime.datetime.now()))
