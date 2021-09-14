@@ -1,7 +1,9 @@
 bone_data/test/
+bone_data/test2/
 bone_data/train/
 bone_data/validation/
 __pycache__/
 result/model/
 runs/
 HW image_40/
+samples/

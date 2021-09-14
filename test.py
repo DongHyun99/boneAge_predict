@@ -50,7 +50,7 @@ def eval(model, test_data):
             age = batch['bone_age'].to(device)
             
             avg_pred = []
-
+            
             transforms = tta.Compose([tta.FiveCrops(crop_height=470, crop_width=470)])
 
             for transformer in transforms:
@@ -74,8 +74,7 @@ def eval(model, test_data):
 #%%
 if __name__ == '__main__':
     freeze_support()
-
-    checkpoint = torch.load(save_path+'BEST_MODEL-epoch-99-val_loss-6.9788.pt')
+    checkpoint = torch.load(save_path+'epoch-90-loss-5.5751-val_loss-7.0702.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
 
     print('{}\n==============================test start==============================\n'.format(datetime.datetime.now()))

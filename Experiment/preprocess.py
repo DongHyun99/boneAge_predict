@@ -1,11 +1,6 @@
 import cv2
 import numpy as np
-import time
-from numpy.core.fromnumeric import clip
-import pandas as pd
-import PIL.Image as Image
-from pandas.core.arrays.sparse import dtype
-start = time.time()
+import glob
 
 #15555, 15588, 15507
 
@@ -41,10 +36,8 @@ dst = (dst/(dst.max()-dst.min()) * 255).astype(np.uint8)
 #df= np.where(df>255,255,df)
 #img = np.array(df, dtype=np.uint8)
 
-
-
-
-
-print("time :", time.time() - start)  # 현재시각 - 시작시간 = 실행 시간
-cv2.imshow(train_dataset_path, dst)
+'''
+img = cv2.resize(img, (500,500))
+cv2.imshow(train_dataset_path, img)
 cv2.waitKey(0)
+'''
