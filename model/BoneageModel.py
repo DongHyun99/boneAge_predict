@@ -12,7 +12,7 @@ class BoneAgeNet(nn.Module):
         
         # Backbone
         self.efficientnet_v2 = _gen_efficientnetv2_s('efficientnetv2_s',in_chans=1)
-        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(3)
+        self.efficientnet_v2.global_pool = nn.AdaptiveAvgPool2d(2)
         self.efficientnet_v2.classifier = nn.Identity()
         self.flatten1 = nn.Flatten()
 
@@ -22,7 +22,7 @@ class BoneAgeNet(nn.Module):
         self.flatten2 = nn.Flatten()
 
         # FC Layer1
-        self.fc_1 = nn.Linear(11520+16, 1000)
+        self.fc_1 = nn.Linear(5120+16, 1000)
         self.mish1 = nn.Mish(inplace=True)
         
         # FC Layer2
