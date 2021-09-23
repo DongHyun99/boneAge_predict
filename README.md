@@ -11,7 +11,7 @@
 * pip install numpy
 * pip install opencv-python
 * pip install matplotlib
-* pip install timm
+* pip install timm  
 * pip install torchsummary
 * pip install tensorboard
 * pip3 install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio===0.9.0 -fhttps://download.pytorch.org/whl/torch_stable.html  
