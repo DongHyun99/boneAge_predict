@@ -44,7 +44,7 @@ for idx, data in train_data.iterrows():
         cv2.imwrite('D:/train/'+str(int(id))+'-{}-rotate{}.png'.format('left50', angle), aug3)
 
 '''
-img = cv2.imread('bone_data/test/4360.png', cv2.IMREAD_GRAYSCALE)
+img = cv2.imread('bone_data/test/4461.png', cv2.IMREAD_GRAYSCALE)
 
 img=cv2.subtract(img, np.average(img.flatten()))
 clahe = cv2.createCLAHE(clipLimit=15)
